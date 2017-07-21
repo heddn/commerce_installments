@@ -1,0 +1,21 @@
+entity.commerce_installment_plan.add_form:
+  route_name: entity.commerce_installment_plan.add_page
+  title: 'Add Installment Plan'
+  appears_on:
+    - entity.commerce_installment_plan.collection
+entity.commerce_installment_plan_type.add_form:
+  route_name: entity.commerce_installment_plan_type.add_form
+  title: 'Add Installment Plan type'
+  appears_on:
+    - entity.commerce_installment_plan_type.collection
+entity.commerce_installment.add_form:
+  route_name: entity.commerce_installment.add_page
+  title: 'Add Installment'
+  appears_on:
+    - entity.commerce_installment.collection
+entity.commerce_installment_type.add_form:
+  route_name: entity.commerce_installment_type.add_form
+  title: 'Add Installment type'
+  appears_on:
+    - entity.commerce_installment_type.collection
+

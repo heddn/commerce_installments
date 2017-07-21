@@ -1,0 +1,34 @@
+
+# Installment Plan menu items definition
+entity.commerce_installment_plan.collection:
+  title: 'Installment Plan list'
+  route_name: entity.commerce_installment_plan.collection
+  description: 'List Installment Plan entities'
+  parent: system.admin_structure
+  weight: 100
+
+# Installment Plan type menu items definition
+entity.commerce_installment_plan_type.collection:
+  title: 'Installment Plan type'
+  route_name: entity.commerce_installment_plan_type.collection
+  description: 'List Installment Plan type (bundles)'
+  parent: system.admin_structure
+  weight: 99
+
+# Installment menu items definition
+entity.commerce_installment.collection:
+  title: 'Installment list'
+  route_name: entity.commerce_installment.collection
+  description: 'List Installment entities'
+  parent: system.admin_structure
+  weight: 100
+
+
+# Installment type menu items definition
+entity.commerce_installment_type.collection:
+  title: 'Installment type'
+  route_name: entity.commerce_installment_type.collection
+  description: 'List Installment type (bundles)'
+  parent: system.admin_structure
+  weight: 99
+

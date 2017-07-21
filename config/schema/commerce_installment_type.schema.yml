@@ -1,0 +1,12 @@
+commerce_installments.commerce_installment_type.*:
+  type: config_entity
+  label: 'Installment type config'
+  mapping:
+    id:
+      type: string
+      label: 'ID'
+    label:
+      type: label
+      label: 'Label'
+    uuid:
+      type: string
