@@ -7,13 +7,11 @@ entity.commerce_installment_plan.collection:
   parent: system.admin_structure
   weight: 100
 
-# Installment Plan type menu items definition
-entity.commerce_installment_plan_type.collection:
-  title: 'Installment Plan type'
-  route_name: entity.commerce_installment_plan_type.collection
-  description: 'List Installment Plan type (bundles)'
+commerce_installment_plan.admin.structure.settings:
+  title: Installment Plan settings
+  description: 'Configure Installment Plan entities'
+  route_name: commerce_installment_plan.settings
   parent: system.admin_structure
-  weight: 99
 
 # Installment menu items definition
 entity.commerce_installment.collection:
@@ -23,12 +21,8 @@ entity.commerce_installment.collection:
   parent: system.admin_structure
   weight: 100
 
-
-# Installment type menu items definition
-entity.commerce_installment_type.collection:
-  title: 'Installment type'
-  route_name: entity.commerce_installment_type.collection
-  description: 'List Installment type (bundles)'
+commerce_installment.admin.structure.settings:
+  title: Installment settings
+  description: 'Configure Installment entities'
+  route_name: commerce_installment.settings
   parent: system.admin_structure
-  weight: 99
-

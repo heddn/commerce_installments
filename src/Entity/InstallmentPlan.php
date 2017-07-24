@@ -45,34 +45,31 @@ use Drupal\user\UserInterface;
  *   },
  *   base_table = "commerce_installment_plan",
  *   data_table = "commerce_installment_plan_field_data",
- *   revision_table = "installment_plan_revision",
+ *   revision_table = "commerce_installment_plan_rev",
  *   revision_data_table = "commerce_installment_plan_field_revision",
  *   translatable = TRUE,
  *   admin_permission = "administer installment plan entities",
  *   entity_keys = {
- *     "id" = "installment_plan_id",
+ *     "id" = "plan_id",
  *     "revision" = "vid",
- *     "bundle" = "type",
  *     "label" = "name",
  *     "uuid" = "uuid",
  *     "uid" = "user_id",
  *     "langcode" = "langcode",
  *   },
  *   links = {
- *     "canonical" = "/installment-plan/{commerce_installment_plan}",
- *     "add-page" = "/installment-plan/add",
- *     "add-form" = "/installment-plan/add/{commerce_installment_plan_type}",
- *     "edit-form" = "/installment-plan/{commerce_installment_plan}/edit",
- *     "delete-form" = "/installment-plan/{commerce_installment_plan}/delete",
- *     "version-history" = "/installment-plan/{commerce_installment_plan}/revisions",
- *     "revision" = "/installment-plan/{commerce_installment_plan}/revisions/{installment_plan_revision}/view",
- *     "revision_revert" = "/installment-plan/{commerce_installment_plan}/revisions/{installment_plan_revision}/revert",
- *     "translation_revert" = "/installment-plan/{commerce_installment_plan}/revisions/{installment_plan_revision}/revert/{langcode}",
- *     "revision_delete" = "/installment-plan/{commerce_installment_plan}/revisions/{installment_plan_revision}/delete",
- *     "collection" = "/installment-plans",
+ *     "canonical" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}",
+ *     "add-form" = "/installment-plan/commerce_installment_plan/add",
+ *     "edit-form" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}/edit",
+ *     "delete-form" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}/delete",
+ *     "version-history" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}/revisions",
+ *     "revision" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}/revisions/{commerce_installment_plan_rev}/view",
+ *     "revision_revert" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}/revisions/{commerce_installment_plan_rev}/revert",
+ *     "translation_revert" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}/revisions/{commerce_installment_plan_rev}/revert/{langcode}",
+ *     "revision_delete" = "/installment-plan/commerce_installment_plan/{commerce_installment_plan}/revisions/{commerce_installment_plan_rev}/delete",
+ *     "collection" = "/installment-plan/commerce_installment_plan",
  *   },
- *   bundle_entity_type = "commerce_installment_plan_type",
- *   field_ui_base_route = "entity.commerce_installment_plan_type.edit_form"
+ *   field_ui_base_route = "commerce_installment_plan.settings"
  * )
  */
 class InstallmentPlan extends RevisionableContentEntityBase implements InstallmentPlanInterface {
@@ -213,7 +210,7 @@ class InstallmentPlan extends RevisionableContentEntityBase implements Installme
       ->setDefaultValue('')
       ->setDisplayOptions('view', [
         'label' => 'above',
-        'type' => 'string',
+        'type' => 'inline_entity_form_simple',
         'weight' => -4,
       ])
       ->setDisplayOptions('form', [
@@ -227,19 +224,47 @@ class InstallmentPlan extends RevisionableContentEntityBase implements Installme
       ->setLabel(t('Order'))
       ->setDescription(t('The parent order.'))
       ->setSetting('target_type', 'commerce_order')
-      ->setReadOnly(TRUE);
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'inline_entity_form_simple',
+        'weight' => 0,
+      ])
+      ->setDisplayOptions('form', [
+        'type' => 'entity_reference_autocomplete',
+        'weight' => 5,
+        'settings' => [
+          'match_operator' => 'CONTAINS',
+          'size' => '60',
+          'placeholder' => '',
+        ],
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
 
     $fields['payment_gateway'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Payment gateway'))
       ->setDescription(t('The payment gateway.'))
       ->setRequired(TRUE)
-      ->setSetting('target_type', 'commerce_payment_gateway');
+      ->setSetting('target_type', 'commerce_payment_gateway')
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'string',
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
 
     $fields['payment_method'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Payment method'))
       ->setDescription(t('The payment method.'))
       ->setSetting('target_type', 'commerce_payment_method')
-      ->setReadOnly(TRUE);
+      ->setDisplayOptions('view', [
+        'label' => 'hidden',
+        'type' => 'string',
+        'weight' => 0,
+      ])
+      ->setDisplayConfigurable('view', TRUE)
+      ->setDisplayConfigurable('form', TRUE);
 
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))

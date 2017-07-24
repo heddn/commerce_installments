@@ -18,14 +18,14 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
   /**
    * Displays a Installment Plan  revision.
    *
-   * @param int $installment_plan_revision
+   * @param int $commerce_installment_plan_revision
    *   The Installment Plan  revision ID.
    *
    * @return array
    *   An array suitable for drupal_render().
    */
-  public function revisionShow($installment_plan_revision) {
-    $commerce_installment_plan = $this->entityManager()->getStorage('commerce_installment_plan')->loadRevision($installment_plan_revision);
+  public function revisionShow($commerce_installment_plan_revision) {
+    $commerce_installment_plan = $this->entityManager()->getStorage('commerce_installment_plan')->loadRevision($commerce_installment_plan_revision);
     $view_builder = $this->entityManager()->getViewBuilder('commerce_installment_plan');
 
     return $view_builder->view($commerce_installment_plan);
@@ -34,14 +34,14 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
   /**
    * Page title callback for a Installment Plan  revision.
    *
-   * @param int $installment_plan_revision
+   * @param int $commerce_installment_plan_revision
    *   The Installment Plan  revision ID.
    *
    * @return string
    *   The page title.
    */
-  public function revisionPageTitle($installment_plan_revision) {
-    $commerce_installment_plan = $this->entityManager()->getStorage('commerce_installment_plan')->loadRevision($installment_plan_revision);
+  public function revisionPageTitle($commerce_installment_plan_revision) {
+    $commerce_installment_plan = $this->entityManager()->getStorage('commerce_installment_plan')->loadRevision($commerce_installment_plan_revision);
     return $this->t('Revision of %title from %date', ['%title' => $commerce_installment_plan->label(), '%date' => format_date($commerce_installment_plan->getRevisionCreationTime())]);
   }
 
@@ -88,7 +88,7 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
         // Use revision link to link to revisions that are not active.
         $date = \Drupal::service('date.formatter')->format($revision->getRevisionCreationTime(), 'short');
         if ($vid != $commerce_installment_plan->getRevisionId()) {
-          $link = $this->l($date, new Url('entity.commerce_installment_plan.revision', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'installment_plan_revision' => $vid]));
+          $link = $this->l($date, new Url('entity.commerce_installment_plan.revision', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid]));
         }
         else {
           $link = $commerce_installment_plan->link($date);
@@ -127,15 +127,15 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
             $links['revert'] = [
               'title' => $this->t('Revert'),
               'url' => $has_translations ?
-              Url::fromRoute('entity.commerce_installment_plan.translation_revert', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'installment_plan_revision' => $vid, 'langcode' => $langcode]) :
-              Url::fromRoute('entity.commerce_installment_plan.revision_revert', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'installment_plan_revision' => $vid]),
+              Url::fromRoute('entity.commerce_installment_plan.translation_revert', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid, 'langcode' => $langcode]) :
+              Url::fromRoute('entity.commerce_installment_plan.revision_revert', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid]),
             ];
           }
 
           if ($delete_permission) {
             $links['delete'] = [
               'title' => $this->t('Delete'),
-              'url' => Url::fromRoute('entity.commerce_installment_plan.revision_delete', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'installment_plan_revision' => $vid]),
+              'url' => Url::fromRoute('entity.commerce_installment_plan.revision_delete', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid]),
             ];
           }
 
@@ -151,7 +151,7 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
       }
     }
 
-    $build['installment_plan_revisions_table'] = [
+    $build['commerce_installment_plan_revisions_table'] = [
       '#theme' => 'table',
       '#rows' => $rows,
       '#header' => $header,

@@ -66,7 +66,7 @@ class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'installment_plan_revision_revert_confirm';
+    return 'commerce_installment_plan_revision_revert_confirm';
   }
 
   /**
@@ -100,8 +100,8 @@ class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $installment_plan_revision = NULL) {
-    $this->revision = $this->InstallmentPlanStorage->loadRevision($installment_plan_revision);
+  public function buildForm(array $form, FormStateInterface $form_state, $commerce_installment_plan_revision = NULL) {
+    $this->revision = $this->InstallmentPlanStorage->loadRevision($commerce_installment_plan_revision);
     $form = parent::buildForm($form, $form_state);
 
     return $form;

@@ -61,7 +61,7 @@ class InstallmentPlanRevisionRevertTranslationForm extends InstallmentPlanRevisi
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'installment_plan_revision_revert_translation_confirm';
+    return 'commerce_installment_plan_revision_revert_translation_confirm';
   }
 
   /**
@@ -74,9 +74,9 @@ class InstallmentPlanRevisionRevertTranslationForm extends InstallmentPlanRevisi
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $installment_plan_revision = NULL, $langcode = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $commerce_installment_plan_revision = NULL, $langcode = NULL) {
     $this->langcode = $langcode;
-    $form = parent::buildForm($form, $form_state, $installment_plan_revision);
+    $form = parent::buildForm($form, $form_state, $commerce_installment_plan_revision);
 
     $form['revert_untranslated_fields'] = [
       '#type' => 'checkbox',

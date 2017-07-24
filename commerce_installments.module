@@ -33,20 +33,10 @@ function commerce_installments_theme() {
     'file' => 'commerce_installment_plan.page.inc',
     'template' => 'commerce_installment_plan',
   ];
-  $theme['commerce_installment_plan_content_add_list'] = [
-    'render element' => 'content',
-    'variables' => ['content' => NULL],
-    'file' => 'commerce_installment_plan.page.inc',
-  ];
   $theme['commerce_installment'] = [
     'render element' => 'elements',
     'file' => 'commerce_installment.page.inc',
     'template' => 'commerce_installment',
-  ];
-  $theme['commerce_installment_content_add_list'] = [
-    'render element' => 'content',
-    'variables' => ['content' => NULL],
-    'file' => 'commerce_installment.page.inc',
   ];
   return $theme;
 }

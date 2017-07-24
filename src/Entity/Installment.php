@@ -50,9 +50,8 @@ use Drupal\user\UserInterface;
  *   translatable = TRUE,
  *   admin_permission = "administer installment entities",
  *   entity_keys = {
- *     "id" = "id",
+ *     "id" = "installment_id",
  *     "revision" = "vid",
- *     "bundle" = "type",
  *     "label" = "name",
  *     "uuid" = "uuid",
  *     "uid" = "user_id",
@@ -61,8 +60,7 @@ use Drupal\user\UserInterface;
  *   },
  *   links = {
  *     "canonical" = "/installment/commerce_installment/{commerce_installment}",
- *     "add-page" = "/installment/commerce_installment/add",
- *     "add-form" = "/installment/commerce_installment/add/{commerce_installment_type}",
+ *     "add-form" = "/installment/commerce_installment/add",
  *     "edit-form" = "/installment/commerce_installment/{commerce_installment}/edit",
  *     "delete-form" = "/installment/commerce_installment/{commerce_installment}/delete",
  *     "version-history" = "/installment/commerce_installment/{commerce_installment}/revisions",
@@ -72,8 +70,7 @@ use Drupal\user\UserInterface;
  *     "revision_delete" = "/installment/commerce_installment/{commerce_installment}/revisions/{commerce_installment_revision}/delete",
  *     "collection" = "/installment/commerce_installment",
  *   },
- *   bundle_entity_type = "commerce_installment_type",
- *   field_ui_base_route = "entity.commerce_installment_type.edit_form"
+ *   field_ui_base_route = "commerce_installment.settings"
  * )
  */
 class Installment extends RevisionableContentEntityBase implements InstallmentInterface {

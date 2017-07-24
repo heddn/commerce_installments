@@ -1,4 +1,8 @@
 # Installment Plan routing definition
+commerce_installment_plan.settings_tab:
+  route_name: commerce_installment_plan.settings
+  title: 'Settings'
+  base_route: commerce_installment_plan.settings
 
 entity.commerce_installment_plan.canonical:
   route_name: entity.commerce_installment_plan.canonical
@@ -22,6 +26,10 @@ entity.commerce_installment_plan.delete_form:
   weight: 10
 
 # Installment routing definition
+commerce_installment.settings_tab:
+  route_name: commerce_installment.settings
+  title: 'Settings'
+  base_route: commerce_installment.settings
 
 entity.commerce_installment.canonical:
   route_name: entity.commerce_installment.canonical
