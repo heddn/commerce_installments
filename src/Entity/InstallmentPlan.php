@@ -67,8 +67,8 @@ use Drupal\user\UserInterface;
  *     "delete-form" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/delete",
  *     "version-history" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/revisions",
  *     "revision" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/revisions/{installment_plan_revision}/view",
- *     "revision_revert" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/revisions/{installment_plan_revision}/revert",
- *     "revision_delete" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/revisions/{installment_plan_revision}/delete",
+ *     "revision-revert-form" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/revisions/{installment_plan_revision}/revert",
+ *     "revision-delete-form" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/revisions/{installment_plan_revision}/delete",
  *   },
  *   bundle_entity_type = "installment_plan_type",
  *   field_ui_base_route = "entity.installment_plan_type.edit_form"
@@ -292,6 +292,7 @@ class InstallmentPlan extends RevisionableContentEntityBase implements Installme
 
     $fields['installments'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Installments'))
+      ->setRevisionable(TRUE)
       ->setSetting('target_type', 'installment')
       ->setDisplayOptions('form', [
         'label' => 'hidden',

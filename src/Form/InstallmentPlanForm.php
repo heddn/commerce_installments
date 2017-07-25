@@ -65,7 +65,7 @@ class InstallmentPlanForm extends ContentEntityForm {
           '%label' => $entity->label(),
         ]));
     }
-    $form_state->setRedirect('entity.installment_plan.canonical', ['installment_plan' => $entity->id()] + $this->getUrlParameters());
+    $form_state->setRedirect('entity.installment_plan.edit_form', ['installment_plan' => $entity->id()] + $this->getUrlParameters());
   }
 
 }

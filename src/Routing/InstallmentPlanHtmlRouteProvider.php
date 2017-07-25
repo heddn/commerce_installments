@@ -35,11 +35,11 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
     }
 
     if ($revert_route = $this->getRevisionRevertRoute($entity_type)) {
-      $collection->add("entity.{$entity_type_id}.revision_revert", $revert_route);
+      $collection->add("entity.{$entity_type_id}.revision_revert_form", $revert_route);
     }
 
     if ($delete_route = $this->getRevisionDeleteRoute($entity_type)) {
-      $collection->add("entity.{$entity_type_id}.revision_delete", $delete_route);
+      $collection->add("entity.{$entity_type_id}.revision_delete_form", $delete_route);
     }
 
     return $collection;
@@ -66,13 +66,19 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
   protected function getHistoryRoute(EntityTypeInterface $entity_type) {
     if ($entity_type->hasLinkTemplate('version-history')) {
       $route = new Route($entity_type->getLinkTemplate('version-history'));
+      $entity_type_id = $entity_type->id();
       $route
         ->setDefaults([
           '_title' => "{$entity_type->getLabel()} revisions",
-          '_controller' => InstallmentPlanController::class . '::revisionOverview',
+          '_controller' => InstallmentPlanController::class . '::revisionOverviewController',
         ])
-        ->setRequirement('_permission', 'access installment plan revisions');
-
+        ->setRequirement('_permission', 'access installment plan revisions')
+        ->setOption('entity_type_id', $entity_type_id)
+        ->setOption('parameters', [
+          $entity_type->id() => [
+            'type' => 'entity:' . $entity_type_id,
+          ],
+        ]);
       return $route;
     }
   }
@@ -110,8 +116,8 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
    *   The generated route, if available.
    */
   protected function getRevisionRevertRoute(EntityTypeInterface $entity_type) {
-    if ($entity_type->hasLinkTemplate('revision_revert')) {
-      $route = new Route($entity_type->getLinkTemplate('revision_revert'));
+    if ($entity_type->hasLinkTemplate('revision-revert-form')) {
+      $route = new Route($entity_type->getLinkTemplate('revision-revert-form'));
       $route
         ->setDefaults([
           '_form' => InstallmentPlanRevisionRevertForm::class,
@@ -133,8 +139,8 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
    *   The generated route, if available.
    */
   protected function getRevisionDeleteRoute(EntityTypeInterface $entity_type) {
-    if ($entity_type->hasLinkTemplate('revision_delete')) {
-      $route = new Route($entity_type->getLinkTemplate('revision_delete'));
+    if ($entity_type->hasLinkTemplate('revision-delete-form')) {
+      $route = new Route($entity_type->getLinkTemplate('revision-delete-form'));
       $route
         ->setDefaults([
           '_form' => InstallmentPlanRevisionDeleteForm::class,

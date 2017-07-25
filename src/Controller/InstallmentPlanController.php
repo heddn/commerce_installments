@@ -2,13 +2,17 @@
 
 namespace Drupal\commerce_installments\Controller;
 
+use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
 use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Component\Utility\Xss;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Datetime\DateFormatterInterface;
-use Drupal\Core\Link;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Render\RendererInterface;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Url;
-use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -18,6 +22,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class InstallmentPlanController extends ControllerBase {
 
+  use UrlParameterBuilderTrait;
+
   /**
    * The date formatter.
    *
@@ -25,20 +31,30 @@ class InstallmentPlanController extends ControllerBase {
    */
   protected $dateFormatter;
 
-  public function __construct(DateFormatterInterface $dateFormatter) {
-    $this->dateFormatter = $dateFormatter;
+  /**
+   * The renderer.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
+   * Creates a new RevisionOverviewController instance.
+   *
+   * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
+   *   The date formatter.
+   */
+  public function __construct(DateFormatterInterface $date_formatter, RendererInterface $renderer) {
+    $this->dateFormatter = $date_formatter;
+    $this->renderer = $renderer;
   }
 
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('date.formatter')
-    );
+    return new static($container->get('date.formatter'), $container->get('renderer'));
   }
-
-  use UrlParameterBuilderTrait;
 
   /**
    * Displays a Installment Plan  revision.
@@ -71,118 +87,205 @@ class InstallmentPlanController extends ControllerBase {
   }
 
   /**
-   * Generates an overview table of older revisions of a Installment Plan .
+   * {@inheritdoc}
+   */
+  protected function hasDeleteRevisionAccess(InstallmentPlanInterface $entity) {
+    return $this->currentUser()->hasPermission("delete all {$entity->id()} revisions");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function buildRevertRevisionLink(InstallmentPlanInterface $entity_revision) {
+    if ($entity_revision->hasLinkTemplate('revision-revert-form')) {
+      return [
+        'title' => t('Revert'),
+        'url' => Url::fromRoute('entity.installment_plan.revision_revert_form', ['installment_plan' => $entity_revision->id(), 'installment_plan_revision' => $entity_revision->getRevisionId()] + $this->getUrlParameters()),
+      ];
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function buildDeleteRevisionLink(InstallmentPlanInterface $entity_revision) {
+    if ($entity_revision->hasLinkTemplate('revision-delete-form')) {
+      return [
+        'title' => t('Delete'),
+        'url' => Url::fromRoute('entity.installment_plan.revision_delete_form', ['installment_plan' => $entity_revision->id(), 'installment_plan_revision' => $entity_revision->getRevisionId()] + $this->getUrlParameters()),
+      ];
+    }
+  }
+
+  /**
+   * Generates an overview table of older revisions of an entity.
    *
-   * @param \Drupal\commerce_installments\Entity\InstallmentPlanInterface $installment_plan
-   *   A Installment Plan  object.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   *   The route match.
    *
    * @return array
-   *   An array as expected by drupal_render().
+   *   A render array.
    */
-  public function revisionOverview(InstallmentPlanInterface $installment_plan) {
-    $account = $this->currentUser();
-    $langcode = $installment_plan->language()->getId();
-    $langname = $installment_plan->language()->getName();
-    $languages = $installment_plan->getTranslationLanguages();
-    $has_translations = (count($languages) > 1);
-    $installment_plan_storage = $this->entityTypeManager()->getStorage('installment_plan');
+  public function revisionOverviewController(RouteMatchInterface $route_match) {
+    return $this->revisionOverview($route_match->getParameter($route_match->getRouteObject()->getOption('entity_type_id')));
+  }
 
-    $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', ['@langname' => $langname, '%title' => $installment_plan->label()]) : $this->t('Revisions for %title', ['%title' => $installment_plan->label()]);
-    $header = [$this->t('Revision'), $this->t('Operations')];
+  /**
+   * {@inheritdoc}
+   */
+  protected function getRevisionDescription(InstallmentPlanInterface $revision, $is_default = FALSE) {
+    if ($revision instanceof RevisionLogInterface) {
+      // Use revision link to link to revisions that are not active.
+      $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
+      $link = $revision->toLink($date, 'revision');
 
-    $revert_permission = (($account->hasPermission("revert all installment plan revisions") || $account->hasPermission('administer installment plan entities')));
-    $delete_permission = (($account->hasPermission("delete all installment plan revisions") || $account->hasPermission('administer installment plan entities')));
+      // @todo: Simplify this when https://www.drupal.org/node/2334319 lands.
+      $username = [
+        '#theme' => 'username',
+        '#account' => $revision->getRevisionUser(),
+      ];
+      $username = $this->renderer->render($username);
+    }
+    else {
+      $link = $revision->toLink($revision->label(), 'revision');
+      $username = '';
 
-    $rows = [];
-
-    $vids = $installment_plan_storage->revisionIds($installment_plan);
-
-    $latest_revision = TRUE;
-
-    foreach (array_reverse($vids) as $vid) {
-      /** @var \Drupal\commerce_installments\Entity\InstallmentPlanInterface $revision */
-      $revision = $installment_plan_storage->loadRevision($vid);
-      // Only show revisions that are affected by the language that is being
-      // displayed.
-      if ($revision->hasTranslation($langcode) && $revision->getTranslation($langcode)->isRevisionTranslationAffected()) {
-        $username = [
-          '#theme' => 'username',
-          '#account' => $revision->getRevisionUser(),
-        ];
-
-        // Use revision link to link to revisions that are not active.
-        $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
-        if ($vid != $installment_plan->getRevisionId()) {
-          $link = new Link($date, new Url('entity.installment_plan.revision', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()));
-        }
-        else {
-          $link = $installment_plan->toLink($date);
-        }
-
-        $row = [];
-        $column = [
-          'data' => [
-            '#type' => 'inline_template',
-            '#template' => '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}',
-            '#context' => [
-              'date' => $link,
-              'username' => \Drupal::service('renderer')->renderPlain($username),
-              'message' => ['#markup' => $revision->getRevisionLogMessage(), '#allowed_tags' => Xss::getHtmlTagList()],
-            ],
-          ],
-        ];
-        $row[] = $column;
-
-        if ($latest_revision) {
-          $row[] = [
-            'data' => [
-              '#prefix' => '<em>',
-              '#markup' => $this->t('Current revision'),
-              '#suffix' => '</em>',
-            ],
-          ];
-          foreach ($row as &$current) {
-            $current['class'] = ['revision-current'];
-          }
-          $latest_revision = FALSE;
-        }
-        else {
-          $links = [];
-          if ($revert_permission) {
-            $links['revert'] = [
-              'title' => $this->t('Revert'),
-              'url' => $has_translations ?
-              Url::fromRoute('entity.installment_plan.translation_revert', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid, 'langcode' => $langcode] + $this->getUrlParameters()) :
-              Url::fromRoute('entity.installment_plan.revision_revert', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()),
-            ];
-          }
-
-          if ($delete_permission) {
-            $links['delete'] = [
-              'title' => $this->t('Delete'),
-              'url' => Url::fromRoute('entity.installment_plan.revision_delete', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()),
-            ];
-          }
-
-          $row[] = [
-            'data' => [
-              '#type' => 'operations',
-              '#links' => $links,
-            ],
-          ];
-        }
-
-        $rows[] = $row;
-      }
     }
 
-    $build['installment_plan_revisions_table'] = [
+    $markup = '';
+    if ($revision instanceof RevisionLogInterface) {
+      $markup = $revision->getRevisionLogMessage();
+    }
+
+    if ($username) {
+      $template = '{% trans %}{{ date }} by {{ username }}{% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}';
+    }
+    else {
+      $template = '{% trans %} {{ date }} {% endtrans %}{% if message %}<p class="revision-log">{{ message }}</p>{% endif %}';
+    }
+
+    $column = [
+      'data' => [
+        '#type' => 'inline_template',
+        '#template' => $template,
+        '#context' => [
+          'date' => $link->toString(),
+          'username' => $username,
+          'message' => ['#markup' => $markup, '#allowed_tags' => Xss::getHtmlTagList()],
+        ],
+      ],
+    ];
+    return $column;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function hasRevertRevisionAccess(InstallmentPlanInterface $entity) {
+    return AccessResult::allowedIfHasPermission($this->currentUser(), "revert all installment plan revisions");
+  }
+  /**
+   * Loads all revision IDs of an entity sorted by revision ID descending.
+   *
+   * @param InstallmentPlanInterface $entity
+   *   The entity.
+   *
+   * @return mixed[]
+   */
+  protected function revisionIds(InstallmentPlanInterface $entity) {
+    $entity_type = $entity->getEntityType();
+    $result = $this->entityTypeManager()->getStorage($entity_type->id())->getQuery()
+      ->allRevisions()
+      ->condition($entity_type->getKey('id'), $entity->id())
+      ->sort($entity_type->getKey('revision'), 'DESC')
+      ->execute();
+    return array_keys($result);
+  }
+
+  /**
+   * Generates an overview table of older revisions of an entity.
+   *
+   * @param \Drupal\commerce_installments\Entity\InstallmentPlanInterface $entity
+   *   An entity object.
+   *
+   * @return array
+   *   A render array.
+   */
+  protected function revisionOverview(InstallmentPlanInterface $entity) {
+    $langcode = $this->languageManager()->getCurrentLanguage(LanguageInterface::TYPE_CONTENT)->getId();
+    $entity_storage = $this->entityTypeManager()->getStorage($entity->getEntityTypeId());
+
+    $header = [$this->t('Revision'), $this->t('Operations')];
+    $rows = [];
+
+    $revision_ids = $this->revisionIds($entity);
+    // @todo Expand the entity storage to load multiple revisions.
+    $entity_revisions = array_combine($revision_ids, array_map(function($vid) use ($entity_storage) {
+      return $entity_storage->loadRevision($vid);
+    }, $revision_ids));
+
+    foreach ($entity_revisions as $revision) {
+      $row = [];
+      /** @var \Drupal\commerce_installments\Entity\InstallmentPlanInterface $revision */
+      $row[] = $this->getRevisionDescription($revision, $revision->isDefaultRevision());
+
+      if ($revision->isDefaultRevision()) {
+        $row[] = [
+          'data' => [
+            '#prefix' => '<em>',
+            '#markup' => $this->t('Current revision'),
+            '#suffix' => '</em>',
+          ],
+        ];
+        foreach ($row as &$current) {
+          $current['class'] = ['revision-current'];
+        }
+      }
+      else {
+        $links = $this->getOperationLinks($revision);
+        $row[] = [
+          'data' => [
+            '#type' => 'operations',
+            '#links' => $links,
+          ],
+        ];
+      }
+
+      $rows[] = $row;
+    }
+
+    $build[$entity->getEntityTypeId() . '_revisions_table'] = [
       '#theme' => 'table',
       '#rows' => $rows,
       '#header' => $header,
     ];
 
+    // We have no clue about caching yet.
+    $build['#cache']['max-age'] = 0;
+
     return $build;
+  }
+
+  /**
+   * Get the links of the operations for an entity revision.
+   *
+   * @param \Drupal\commerce_installments\Entity\InstallmentPlanInterface $entity_revision
+   *   The entity to build the revision links for.
+   *
+   * @return array
+   *   The operation links.
+   */
+  protected function getOperationLinks(InstallmentPlanInterface $entity_revision) {
+    $links = [];
+    if ($this->hasRevertRevisionAccess($entity_revision)) {
+      $links['revert'] = $this->buildRevertRevisionLink($entity_revision);
+    }
+
+    if ($this->hasDeleteRevisionAccess($entity_revision)) {
+      $links['delete'] = $this->buildDeleteRevisionLink($entity_revision);
+    }
+
+    return array_filter($links);
   }
 
 }

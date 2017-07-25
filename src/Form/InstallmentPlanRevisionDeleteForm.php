@@ -128,7 +128,7 @@ class InstallmentPlanRevisionDeleteForm extends ConfirmFormBase {
       'entity.installment_plan.canonical',
        ['installment_plan' => $this->revision->id()] + $this->getUrlParameters()
     );
-    if ($this->connection->query('SELECT COUNT(DISTINCT vid) FROM {installment_plan_field_revision} WHERE plan_id = :id', [':id' => $this->revision->id()])->fetchField() > 1) {
+    if ($this->connection->query('SELECT COUNT(DISTINCT vid) FROM {installment_plan_revision} WHERE plan_id = :id', [':id' => $this->revision->id()])->fetchField() > 1) {
       $form_state->setRedirect(
         'entity.installment_plan.version_history',
          ['installment_plan' => $this->revision->id()] + $this->getUrlParameters()
