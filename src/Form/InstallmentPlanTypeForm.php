@@ -2,13 +2,14 @@
 
 namespace Drupal\commerce_installments\Form;
 
-use Drupal\commerce\Form\CommerceBundleEntityFormBase;
+use Drupal\commerce_installments\Entity\InstallmentPlanType;
+use Drupal\Core\Entity\BundleEntityFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Class InstallmentPlanTypeForm.
  */
-class InstallmentPlanTypeForm extends CommerceBundleEntityFormBase {
+class InstallmentPlanTypeForm extends BundleEntityFormBase {
 
   /**
    * {@inheritdoc}
@@ -30,7 +31,7 @@ class InstallmentPlanTypeForm extends CommerceBundleEntityFormBase {
       '#type' => 'machine_name',
       '#default_value' => $installment_plan_type->id(),
       '#machine_name' => [
-        'exists' => '\Drupal\commerce_installments\Entity\InstallmentPlanType::load',
+        'exists' => InstallmentPlanType::class . '::load',
       ],
       '#disabled' => !$installment_plan_type->isNew(),
     ];

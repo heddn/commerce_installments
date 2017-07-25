@@ -3,7 +3,7 @@
 namespace Drupal\commerce_installments\Entity;
 
 use Drupal\commerce_installments\UrlParameterBuilderTrait;
-use Drupal\Console\Command\Shared\TranslationTrait;
+
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\Entity\RevisionableContentEntityBase;
@@ -84,8 +84,7 @@ class InstallmentPlan extends RevisionableContentEntityBase implements Installme
    * {@inheritdoc}
    */
   protected function urlRouteParameters($rel) {
-    $uri_route_parameters = $this->getUrlParameters();
-    return $uri_route_parameters += parent::urlRouteParameters($rel);
+    return $this->getUrlParameters() + parent::urlRouteParameters($rel);
   }
 
   /**

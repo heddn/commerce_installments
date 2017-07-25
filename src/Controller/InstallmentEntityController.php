@@ -4,14 +4,10 @@ namespace Drupal\commerce_installments\Controller;
 
 use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Core\Entity\Controller\EntityController;
-use Drupal\Core\Entity\EntityRepositoryInterface;
-use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
+
+
 use Drupal\Core\Link;
-use Drupal\Core\Render\RendererInterface;
-use Drupal\Core\Routing\UrlGeneratorInterface;
-use Drupal\Core\StringTranslation\TranslationInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+
 
 /**
  * Provides the add-page and title callbacks for entities.
@@ -27,45 +23,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class InstallmentEntityController extends EntityController {
 
   use UrlParameterBuilderTrait;
-
-  /**
-   * Constructs a new EntityController.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
-   *   The entity type manager.
-   * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entity_type_bundle_info
-   *   The entity type bundle info.
-   * @param \Drupal\Core\Entity\EntityRepositoryInterface $entity_repository
-   *   The entity repository.
-   * @param \Drupal\Core\Render\RendererInterface $renderer
-   *   The renderer.
-   * @param \Drupal\Core\StringTranslation\TranslationInterface $string_translation
-   *   The string translation.
-   * @param \Drupal\Core\Routing\UrlGeneratorInterface $url_generator
-   *   The url generator.
-   */
-  public function __construct(EntityTypeManagerInterface $entity_type_manager, EntityTypeBundleInfoInterface $entity_type_bundle_info, EntityRepositoryInterface $entity_repository, RendererInterface $renderer, TranslationInterface $string_translation, UrlGeneratorInterface $url_generator) {
-    $this->entityTypeManager = $entity_type_manager;
-    $this->entityTypeBundleInfo = $entity_type_bundle_info;
-    $this->entityRepository = $entity_repository;
-    $this->renderer = $renderer;
-    $this->stringTranslation = $string_translation;
-    $this->urlGenerator = $url_generator;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('entity_type.manager'),
-      $container->get('entity_type.bundle.info'),
-      $container->get('entity.repository'),
-      $container->get('renderer'),
-      $container->get('string_translation'),
-      $container->get('url_generator')
-    );
-  }
 
   /**
    * {@inheritdoc}

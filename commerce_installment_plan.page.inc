@@ -20,9 +20,6 @@ use Drupal\Core\Render\Element;
  *   - attributes: HTML attributes for the containing element.
  */
 function template_preprocess_commerce_installment_plan(array &$variables) {
-  // Fetch InstallmentPlan Entity Object.
-  $commerce_installment_plan = $variables['elements']['#installment_plan'];
-
   // Helpful $content variable for templates.
   foreach (Element::children($variables['elements']) as $key) {
     $variables['content'][$key] = $variables['elements'][$key];

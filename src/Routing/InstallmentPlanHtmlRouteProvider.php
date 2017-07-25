@@ -3,6 +3,9 @@
 namespace Drupal\commerce_installments\Routing;
 
 use Drupal\commerce_installments\Controller\InstallmentEntityController;
+use Drupal\commerce_installments\Controller\InstallmentPlanController;
+use Drupal\commerce_installments\Form\InstallmentPlanRevisionDeleteForm;
+use Drupal\commerce_installments\Form\InstallmentPlanRevisionRevertForm;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider;
 use Symfony\Component\Routing\Route;
@@ -66,7 +69,7 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
       $route
         ->setDefaults([
           '_title' => "{$entity_type->getLabel()} revisions",
-          '_controller' => '\Drupal\commerce_installments\Controller\InstallmentPlanController::revisionOverview',
+          '_controller' => InstallmentPlanController::class . '::revisionOverview',
         ])
         ->setRequirement('_permission', 'access installment plan revisions');
 
@@ -88,8 +91,8 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
       $route = new Route($entity_type->getLinkTemplate('revision'));
       $route
         ->setDefaults([
-          '_controller' => '\Drupal\commerce_installments\Controller\InstallmentPlanController::revisionShow',
-          '_title_callback' => '\Drupal\commerce_installments\Controller\InstallmentPlanController::revisionPageTitle',
+          '_controller' => InstallmentPlanController::class . '::revisionShow',
+          '_title_callback' => InstallmentPlanController::class . '::revisionPageTitle',
         ])
         ->setRequirement('_permission', 'access installment plan revisions');
 
@@ -111,7 +114,7 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
       $route = new Route($entity_type->getLinkTemplate('revision_revert'));
       $route
         ->setDefaults([
-          '_form' => '\Drupal\commerce_installments\Form\InstallmentPlanRevisionRevertForm',
+          '_form' => InstallmentPlanRevisionRevertForm::class,
           '_title' => 'Revert to earlier revision',
         ])
         ->setRequirement('_permission', 'revert all installment plan revisions');
@@ -134,7 +137,7 @@ class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
       $route = new Route($entity_type->getLinkTemplate('revision_delete'));
       $route
         ->setDefaults([
-          '_form' => '\Drupal\commerce_installments\Form\InstallmentPlanRevisionDeleteForm',
+          '_form' => InstallmentPlanRevisionDeleteForm::class,
           '_title' => 'Delete earlier revision',
         ])
         ->setRequirement('_permission', 'delete all installment plan revisions');

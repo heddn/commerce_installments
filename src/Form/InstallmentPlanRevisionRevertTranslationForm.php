@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_installments\Form;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -38,11 +39,13 @@ class InstallmentPlanRevisionRevertTranslationForm extends InstallmentPlanRevisi
    *   The Installment Plan storage.
    * @param \Drupal\Core\Datetime\DateFormatterInterface $date_formatter
    *   The date formatter service.
+   * @param \Drupal\Component\Datetime\TimeInterface
+   *   The time service.
    * @param \Drupal\Core\Language\LanguageManagerInterface $language_manager
    *   The language manager.
    */
-  public function __construct(EntityStorageInterface $entity_storage, DateFormatterInterface $date_formatter, LanguageManagerInterface $language_manager) {
-    parent::__construct($entity_storage, $date_formatter);
+  public function __construct(EntityStorageInterface $entity_storage, DateFormatterInterface $date_formatter, TimeInterface $time, LanguageManagerInterface $language_manager) {
+    parent::__construct($entity_storage, $date_formatter, $time);
     $this->languageManager = $language_manager;
   }
 
@@ -53,6 +56,7 @@ class InstallmentPlanRevisionRevertTranslationForm extends InstallmentPlanRevisi
     return new static(
       $container->get('entity_type.manager')->getStorage('installment_plan'),
       $container->get('date.formatter'),
+      $container->get('datetime.time'),
       $container->get('language_manager')
     );
   }
@@ -107,7 +111,7 @@ class InstallmentPlanRevisionRevertTranslationForm extends InstallmentPlanRevisi
 
     $latest_revision_translation->setNewRevision();
     $latest_revision_translation->isDefaultRevision(TRUE);
-    $revision->setRevisionCreationTime(REQUEST_TIME);
+    $revision->setRevisionCreationTime($this->time->getRequestTime());
 
     return $latest_revision_translation;
   }

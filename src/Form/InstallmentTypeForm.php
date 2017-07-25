@@ -2,13 +2,14 @@
 
 namespace Drupal\commerce_installments\Form;
 
-use Drupal\commerce\Form\CommerceBundleEntityFormBase;
+use Drupal\commerce_installments\Entity\InstallmentType;
+use Drupal\Core\Entity\BundleEntityFormBase;
 use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Class InstallmentTypeForm.
  */
-class InstallmentTypeForm extends CommerceBundleEntityFormBase {
+class InstallmentTypeForm extends BundleEntityFormBase {
 
   /**
    * {@inheritdoc}
@@ -34,7 +35,7 @@ class InstallmentTypeForm extends CommerceBundleEntityFormBase {
       '#type' => 'machine_name',
       '#default_value' => $installment_type->id(),
       '#machine_name' => [
-        'exists' => '\Drupal\commerce_installments\Entity\InstallmentType::load',
+        'exists' => InstallmentType::class . '::load',
       ],
       '#disabled' => !$installment_type->isNew(),
     ];
@@ -66,7 +67,6 @@ class InstallmentTypeForm extends CommerceBundleEntityFormBase {
         '@workflow' => $workflow->getLabel(),
       ]));
     }
-    $this->validateTraitForm($form, $form_state);
   }
 
   /**

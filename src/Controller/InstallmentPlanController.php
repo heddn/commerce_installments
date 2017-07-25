@@ -5,9 +5,11 @@ namespace Drupal\commerce_installments\Controller;
 use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
+use Drupal\Core\Datetime\DateFormatterInterface;
+use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class InstallmentPlanController.
@@ -15,6 +17,26 @@ use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
  *  Returns responses for Installment Plan routes.
  */
 class InstallmentPlanController extends ControllerBase {
+
+  /**
+   * The date formatter.
+   *
+   * @var \Drupal\Core\Datetime\DateFormatterInterface
+   */
+  protected $dateFormatter;
+
+  public function __construct(DateFormatterInterface $dateFormatter) {
+    $this->dateFormatter = $dateFormatter;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('date.formatter')
+    );
+  }
 
   use UrlParameterBuilderTrait;
 
@@ -28,8 +50,8 @@ class InstallmentPlanController extends ControllerBase {
    *   An array suitable for drupal_render().
    */
   public function revisionShow($installment_plan_revision) {
-    $installment_plan = $this->entityManager()->getStorage('installment_plan')->loadRevision($installment_plan_revision);
-    $view_builder = $this->entityManager()->getViewBuilder('installment_plan');
+    $installment_plan = $this->entityTypeManager()->getStorage('installment_plan')->loadRevision($installment_plan_revision);
+    $view_builder = $this->entityTypeManager()->getViewBuilder('installment_plan');
 
     return $view_builder->view($installment_plan);
   }
@@ -44,8 +66,8 @@ class InstallmentPlanController extends ControllerBase {
    *   The page title.
    */
   public function revisionPageTitle($installment_plan_revision) {
-    $installment_plan = $this->entityManager()->getStorage('installment_plan')->loadRevision($installment_plan_revision);
-    return $this->t('Revision of %title from %date', ['%title' => $installment_plan->label(), '%date' => format_date($installment_plan->getRevisionCreationTime())]);
+    $installment_plan = $this->entityTypeManager()->getStorage('installment_plan')->loadRevision($installment_plan_revision);
+    return $this->t('Revision of %title from %date', ['%title' => $installment_plan->label(), '%date' => $this->dateFormatter->format($installment_plan->getRevisionCreationTime())]);
   }
 
   /**
@@ -63,7 +85,7 @@ class InstallmentPlanController extends ControllerBase {
     $langname = $installment_plan->language()->getName();
     $languages = $installment_plan->getTranslationLanguages();
     $has_translations = (count($languages) > 1);
-    $installment_plan_storage = $this->entityManager()->getStorage('installment_plan');
+    $installment_plan_storage = $this->entityTypeManager()->getStorage('installment_plan');
 
     $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', ['@langname' => $langname, '%title' => $installment_plan->label()]) : $this->t('Revisions for %title', ['%title' => $installment_plan->label()]);
     $header = [$this->t('Revision'), $this->t('Operations')];
@@ -78,7 +100,7 @@ class InstallmentPlanController extends ControllerBase {
     $latest_revision = TRUE;
 
     foreach (array_reverse($vids) as $vid) {
-      /** @var \Drupal\commerce_installments\InstallmentPlanInterface $revision */
+      /** @var \Drupal\commerce_installments\Entity\InstallmentPlanInterface $revision */
       $revision = $installment_plan_storage->loadRevision($vid);
       // Only show revisions that are affected by the language that is being
       // displayed.
@@ -89,12 +111,12 @@ class InstallmentPlanController extends ControllerBase {
         ];
 
         // Use revision link to link to revisions that are not active.
-        $date = \Drupal::service('date.formatter')->format($revision->getRevisionCreationTime(), 'short');
+        $date = $this->dateFormatter->format($revision->getRevisionCreationTime(), 'short');
         if ($vid != $installment_plan->getRevisionId()) {
-          $link = $this->l($date, new Url('entity.installment_plan.revision', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()));
+          $link = new Link($date, new Url('entity.installment_plan.revision', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()));
         }
         else {
-          $link = $installment_plan->link($date);
+          $link = $installment_plan->toLink($date);
         }
 
         $row = [];

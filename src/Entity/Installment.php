@@ -68,8 +68,7 @@ class Installment extends ContentEntityBase implements InstallmentInterface {
    * {@inheritdoc}
    */
   protected function urlRouteParameters($rel) {
-    $uri_route_parameters = $this->getUrlParameters();
-    return $uri_route_parameters += parent::urlRouteParameters($rel);
+    return $this->getUrlParameters() + parent::urlRouteParameters($rel);
   }
 
   /**
@@ -89,8 +88,9 @@ class Installment extends ContentEntityBase implements InstallmentInterface {
     $args = [
       ':amount' => $this->getAmount()->__toString(),
       ':date' => \Drupal::getContainer()->get('date.formatter')->format($this->getPaymentDate(), 'html_date'),
+      ':state' => $this->getState()->getLabel(),
     ];
-    return $this->t(':amount on :date', $args);
+    return $this->t(':amount on :date is :state', $args);
   }
 
   /**
@@ -207,9 +207,10 @@ class Installment extends ContentEntityBase implements InstallmentInterface {
       ->setDisplayConfigurable('view', TRUE);
 
     $fields['state'] = BaseFieldDefinition::create('state')
-      ->setLabel(t('State'))
+      ->setLabel(t('Payment state'))
       ->setDescription(t('The installment payment state.'))
       ->setSetting('max_length', 255)
+      ->setRequired(TRUE)
       ->setDisplayOptions('form', [
         'type' => 'options_select',
         'weight' => 2,
@@ -221,7 +222,7 @@ class Installment extends ContentEntityBase implements InstallmentInterface {
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE)
-      ->setSetting('workflow_callback', ['\Drupal\commerce_installments\Entity\Installment', 'getWorkflowId']);
+      ->setSetting('workflow_callback', [Installment::class, 'getWorkflowId']);
 
     $fields['payment_date'] = BaseFieldDefinition::create('timestamp')
       ->setLabel(t('Installment date'))

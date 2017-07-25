@@ -27,14 +27,14 @@ class RouteSubscriber extends RouteSubscriberBase {
    *   The entity manager.
    */
   public function __construct(EntityTypeManagerInterface $entityTypeManager) {
-    $this->entityManager = $entityTypeManager;
+    $this->entityTypeManager = $entityTypeManager;
   }
 
   /**
    * {@inheritdoc}
    */
   protected function alterRoutes(RouteCollection $collection) {
-    $definition = $this->entityManager->getDefinition('installment_plan');
+    $definition = $this->entityTypeManager->getDefinition('installment_plan');
     $entity_type_id = $definition->id();
     foreach (array_keys($definition->getLinkTemplates()) as $key) {
       $key = str_replace('-', '_', $key);

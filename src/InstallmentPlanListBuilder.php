@@ -33,11 +33,11 @@ class InstallmentPlanListBuilder extends EntityListBuilder {
    *   The entity type definition.
    * @param \Drupal\Core\Entity\EntityStorageInterface $storage
    *   The entity storage class.
+   * @param \Drupal\Core\Routing\RouteMatchInterface $route_match
+   *   The route match service.
    */
   public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, RouteMatchInterface $route_match) {
-    $this->entityTypeId = $entity_type->id();
-    $this->storage = $storage;
-    $this->entityType = $entity_type;
+    parent::__construct($entity_type, $storage);
     $this->routeMatch = $route_match;
   }
 
