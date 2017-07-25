@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_installments\Form;
 
+use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
@@ -17,6 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
 
+  use UrlParameterBuilderTrait;
 
   /**
    * The Installment Plan revision.
@@ -57,7 +59,7 @@ class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('entity.manager')->getStorage('commerce_installment_plan'),
+      $container->get('entity_type.manager')->getStorage('installment_plan'),
       $container->get('date.formatter')
     );
   }
@@ -66,7 +68,7 @@ class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'commerce_installment_plan_revision_revert_confirm';
+    return 'installment_plan_revision_revert_confirm';
   }
 
   /**
@@ -80,7 +82,7 @@ class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('entity.commerce_installment_plan.version_history', ['commerce_installment_plan' => $this->revision->id()]);
+    return new Url('entity.installment_plan.version_history', ['installment_plan' => $this->revision->id()] + $this->getUrlParameters());
   }
 
   /**
@@ -100,8 +102,8 @@ class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $commerce_installment_plan_revision = NULL) {
-    $this->revision = $this->InstallmentPlanStorage->loadRevision($commerce_installment_plan_revision);
+  public function buildForm(array $form, FormStateInterface $form_state, $installment_plan_revision = NULL) {
+    $this->revision = $this->InstallmentPlanStorage->loadRevision($installment_plan_revision);
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -122,8 +124,8 @@ class InstallmentPlanRevisionRevertForm extends ConfirmFormBase {
     $this->logger('content')->notice('Installment Plan: reverted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
     drupal_set_message(t('Installment Plan %title has been reverted to the revision from %revision-date.', ['%title' => $this->revision->label(), '%revision-date' => $this->dateFormatter->format($original_revision_timestamp)]));
     $form_state->setRedirect(
-      'entity.commerce_installment_plan.version_history',
-      ['commerce_installment_plan' => $this->revision->id()]
+      'entity.installment_plan.version_history',
+      ['installment_plan' => $this->revision->id()] + $this->getUrlParameters()
     );
   }
 

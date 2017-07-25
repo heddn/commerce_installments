@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_installments\Controller;
 
+use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
@@ -13,56 +14,58 @@ use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
  *
  *  Returns responses for Installment Plan routes.
  */
-class InstallmentPlanController extends ControllerBase implements ContainerInjectionInterface {
+class InstallmentPlanController extends ControllerBase {
+
+  use UrlParameterBuilderTrait;
 
   /**
    * Displays a Installment Plan  revision.
    *
-   * @param int $commerce_installment_plan_revision
+   * @param int $installment_plan_revision
    *   The Installment Plan  revision ID.
    *
    * @return array
    *   An array suitable for drupal_render().
    */
-  public function revisionShow($commerce_installment_plan_revision) {
-    $commerce_installment_plan = $this->entityManager()->getStorage('commerce_installment_plan')->loadRevision($commerce_installment_plan_revision);
-    $view_builder = $this->entityManager()->getViewBuilder('commerce_installment_plan');
+  public function revisionShow($installment_plan_revision) {
+    $installment_plan = $this->entityManager()->getStorage('installment_plan')->loadRevision($installment_plan_revision);
+    $view_builder = $this->entityManager()->getViewBuilder('installment_plan');
 
-    return $view_builder->view($commerce_installment_plan);
+    return $view_builder->view($installment_plan);
   }
 
   /**
    * Page title callback for a Installment Plan  revision.
    *
-   * @param int $commerce_installment_plan_revision
+   * @param int $installment_plan_revision
    *   The Installment Plan  revision ID.
    *
    * @return string
    *   The page title.
    */
-  public function revisionPageTitle($commerce_installment_plan_revision) {
-    $commerce_installment_plan = $this->entityManager()->getStorage('commerce_installment_plan')->loadRevision($commerce_installment_plan_revision);
-    return $this->t('Revision of %title from %date', ['%title' => $commerce_installment_plan->label(), '%date' => format_date($commerce_installment_plan->getRevisionCreationTime())]);
+  public function revisionPageTitle($installment_plan_revision) {
+    $installment_plan = $this->entityManager()->getStorage('installment_plan')->loadRevision($installment_plan_revision);
+    return $this->t('Revision of %title from %date', ['%title' => $installment_plan->label(), '%date' => format_date($installment_plan->getRevisionCreationTime())]);
   }
 
   /**
    * Generates an overview table of older revisions of a Installment Plan .
    *
-   * @param \Drupal\commerce_installments\Entity\InstallmentPlanInterface $commerce_installment_plan
+   * @param \Drupal\commerce_installments\Entity\InstallmentPlanInterface $installment_plan
    *   A Installment Plan  object.
    *
    * @return array
    *   An array as expected by drupal_render().
    */
-  public function revisionOverview(InstallmentPlanInterface $commerce_installment_plan) {
+  public function revisionOverview(InstallmentPlanInterface $installment_plan) {
     $account = $this->currentUser();
-    $langcode = $commerce_installment_plan->language()->getId();
-    $langname = $commerce_installment_plan->language()->getName();
-    $languages = $commerce_installment_plan->getTranslationLanguages();
+    $langcode = $installment_plan->language()->getId();
+    $langname = $installment_plan->language()->getName();
+    $languages = $installment_plan->getTranslationLanguages();
     $has_translations = (count($languages) > 1);
-    $commerce_installment_plan_storage = $this->entityManager()->getStorage('commerce_installment_plan');
+    $installment_plan_storage = $this->entityManager()->getStorage('installment_plan');
 
-    $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', ['@langname' => $langname, '%title' => $commerce_installment_plan->label()]) : $this->t('Revisions for %title', ['%title' => $commerce_installment_plan->label()]);
+    $build['#title'] = $has_translations ? $this->t('@langname revisions for %title', ['@langname' => $langname, '%title' => $installment_plan->label()]) : $this->t('Revisions for %title', ['%title' => $installment_plan->label()]);
     $header = [$this->t('Revision'), $this->t('Operations')];
 
     $revert_permission = (($account->hasPermission("revert all installment plan revisions") || $account->hasPermission('administer installment plan entities')));
@@ -70,13 +73,13 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
 
     $rows = [];
 
-    $vids = $commerce_installment_plan_storage->revisionIds($commerce_installment_plan);
+    $vids = $installment_plan_storage->revisionIds($installment_plan);
 
     $latest_revision = TRUE;
 
     foreach (array_reverse($vids) as $vid) {
       /** @var \Drupal\commerce_installments\InstallmentPlanInterface $revision */
-      $revision = $commerce_installment_plan_storage->loadRevision($vid);
+      $revision = $installment_plan_storage->loadRevision($vid);
       // Only show revisions that are affected by the language that is being
       // displayed.
       if ($revision->hasTranslation($langcode) && $revision->getTranslation($langcode)->isRevisionTranslationAffected()) {
@@ -87,11 +90,11 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
 
         // Use revision link to link to revisions that are not active.
         $date = \Drupal::service('date.formatter')->format($revision->getRevisionCreationTime(), 'short');
-        if ($vid != $commerce_installment_plan->getRevisionId()) {
-          $link = $this->l($date, new Url('entity.commerce_installment_plan.revision', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid]));
+        if ($vid != $installment_plan->getRevisionId()) {
+          $link = $this->l($date, new Url('entity.installment_plan.revision', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()));
         }
         else {
-          $link = $commerce_installment_plan->link($date);
+          $link = $installment_plan->link($date);
         }
 
         $row = [];
@@ -127,15 +130,15 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
             $links['revert'] = [
               'title' => $this->t('Revert'),
               'url' => $has_translations ?
-              Url::fromRoute('entity.commerce_installment_plan.translation_revert', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid, 'langcode' => $langcode]) :
-              Url::fromRoute('entity.commerce_installment_plan.revision_revert', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid]),
+              Url::fromRoute('entity.installment_plan.translation_revert', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid, 'langcode' => $langcode] + $this->getUrlParameters()) :
+              Url::fromRoute('entity.installment_plan.revision_revert', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()),
             ];
           }
 
           if ($delete_permission) {
             $links['delete'] = [
               'title' => $this->t('Delete'),
-              'url' => Url::fromRoute('entity.commerce_installment_plan.revision_delete', ['commerce_installment_plan' => $commerce_installment_plan->id(), 'commerce_installment_plan_rev' => $vid]),
+              'url' => Url::fromRoute('entity.installment_plan.revision_delete', ['installment_plan' => $installment_plan->id(), 'installment_plan_revision' => $vid] + $this->getUrlParameters()),
             ];
           }
 
@@ -151,7 +154,7 @@ class InstallmentPlanController extends ControllerBase implements ContainerInjec
       }
     }
 
-    $build['commerce_installment_plan_revisions_table'] = [
+    $build['installment_plan_revisions_table'] = [
       '#theme' => 'table',
       '#rows' => $rows,
       '#header' => $header,

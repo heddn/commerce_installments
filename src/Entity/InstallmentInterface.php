@@ -2,8 +2,8 @@
 
 namespace Drupal\commerce_installments\Entity;
 
-use Drupal\Core\Entity\RevisionLogInterface;
-use Drupal\Core\Entity\RevisionableInterface;
+use Drupal\commerce_price\Price;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
 use Drupal\user\EntityOwnerInterface;
 
@@ -12,28 +12,7 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup commerce_installments
  */
-interface InstallmentInterface extends RevisionableInterface, RevisionLogInterface, EntityChangedInterface, EntityOwnerInterface {
-
-  // Add get/set methods for your configuration properties here.
-
-  /**
-   * Gets the Installment name.
-   *
-   * @return string
-   *   Name of the Installment.
-   */
-  public function getName();
-
-  /**
-   * Sets the Installment name.
-   *
-   * @param string $name
-   *   The Installment name.
-   *
-   * @return \Drupal\commerce_installments\Entity\InstallmentInterface
-   *   The called Installment entity.
-   */
-  public function setName($name);
+interface InstallmentInterface extends ContentEntityInterface, EntityChangedInterface, EntityOwnerInterface {
 
   /**
    * Gets the Installment creation timestamp.
@@ -55,41 +34,47 @@ interface InstallmentInterface extends RevisionableInterface, RevisionLogInterfa
   public function setCreatedTime($timestamp);
 
   /**
-   * Gets the Installment revision creation timestamp.
+   * Gets the installment payment state.
    *
-   * @return int
-   *   The UNIX timestamp of when this revision was created.
+   * @return \Drupal\state_machine\Plugin\Field\FieldType\StateItemInterface
+   *   The installment payment state.
    */
-  public function getRevisionCreationTime();
+  public function getState();
 
   /**
-   * Sets the Installment revision creation timestamp.
+   * Sets the date (timestamp) to process installment payment.
    *
    * @param int $timestamp
-   *   The UNIX timestamp of when this revision was created.
+   *   The installment payment timestamp.
    *
-   * @return \Drupal\commerce_installments\Entity\InstallmentInterface
-   *   The called Installment entity.
+   * @return $this
    */
-  public function setRevisionCreationTime($timestamp);
+  public function setPaymentDate($timestamp);
 
   /**
-   * Gets the Installment revision author.
+   * Gets the date (timestamp) to process installment payment.
    *
-   * @return \Drupal\user\UserInterface
-   *   The user entity for the revision author.
+   * @return int
+   *   The installment payment timestamp.
    */
-  public function getRevisionUser();
+  public function getPaymentDate();
 
   /**
-   * Sets the Installment revision author.
+   * Gets the payment amount.
    *
-   * @param int $uid
-   *   The user ID of the revision author.
-   *
-   * @return \Drupal\commerce_installments\Entity\InstallmentInterface
-   *   The called Installment entity.
+   * @return \Drupal\commerce_price\Price|null
+   *   The payment amount, or NULL.
    */
-  public function setRevisionUserId($uid);
+  public function getAmount();
+
+  /**
+   * Sets the payment amount.
+   *
+   * @param \Drupal\commerce_price\Price $amount
+   *   The payment amount.
+   *
+   * @return $this
+   */
+  public function setAmount(Price $amount);
 
 }

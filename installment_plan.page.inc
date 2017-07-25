@@ -2,26 +2,26 @@
 
 /**
  * @file
- * Contains commerce_installment.page.inc.
+ * Contains installment_plan.page.inc.
  *
- * Page callback for Installment entities.
+ * Page callback for Installment Plan entities.
  */
 
 use Drupal\Core\Render\Element;
 
 /**
- * Prepares variables for Installment templates.
+ * Prepares variables for Commerce Installment Plan templates.
  *
- * Default template: commerce_installment.html.twig.
+ * Default template: commerce_installment_plan.html.twig.
  *
  * @param array $variables
  *   An associative array containing:
  *   - elements: An associative array containing the user information and any
  *   - attributes: HTML attributes for the containing element.
  */
-function template_preprocess_commerce_installment(array &$variables) {
-  // Fetch Installment Entity Object.
-  $commerce_installment = $variables['elements']['#installment'];
+function template_preprocess_commerce_installment_plan(array &$variables) {
+  // Fetch InstallmentPlan Entity Object.
+  $installment_plan = $variables['elements']['#installment_plan'];
 
   // Helpful $content variable for templates.
   foreach (Element::children($variables['elements']) as $key) {

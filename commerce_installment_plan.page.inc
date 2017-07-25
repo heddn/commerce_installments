@@ -21,7 +21,7 @@ use Drupal\Core\Render\Element;
  */
 function template_preprocess_commerce_installment_plan(array &$variables) {
   // Fetch InstallmentPlan Entity Object.
-  $commerce_installment_plan = $variables['elements']['#commerce_installment_plan'];
+  $commerce_installment_plan = $variables['elements']['#installment_plan'];
 
   // Helpful $content variable for templates.
   foreach (Element::children($variables['elements']) as $key) {

@@ -22,7 +22,7 @@ class InstallmentPlanStorage extends SqlContentEntityStorage implements Installm
    */
   public function revisionIds(InstallmentPlanInterface $entity) {
     return $this->database->query(
-      'SELECT vid FROM {commerce_installment_plan_rev} WHERE id=:id ORDER BY vid',
+      'SELECT vid FROM {installment_plan_revision} WHERE plan_id=:id ORDER BY vid',
       [':id' => $entity->id()]
     )->fetchCol();
   }
@@ -32,7 +32,7 @@ class InstallmentPlanStorage extends SqlContentEntityStorage implements Installm
    */
   public function userRevisionIds(AccountInterface $account) {
     return $this->database->query(
-      'SELECT vid FROM {commerce_installment_plan_field_revision} WHERE uid = :uid ORDER BY vid',
+      'SELECT vid FROM {installment_plan_field_revision} WHERE uid = :uid ORDER BY vid',
       [':uid' => $account->id()]
     )->fetchCol();
   }
@@ -41,7 +41,7 @@ class InstallmentPlanStorage extends SqlContentEntityStorage implements Installm
    * {@inheritdoc}
    */
   public function countDefaultLanguageRevisions(InstallmentPlanInterface $entity) {
-    return $this->database->query('SELECT COUNT(*) FROM {commerce_installment_plan_field_revision} WHERE id = :id AND default_langcode = 1', [':id' => $entity->id()])
+    return $this->database->query('SELECT COUNT(*) FROM {installment_plan_field_revision} WHERE plan_id = :id AND default_langcode = 1', [':id' => $entity->id()])
       ->fetchField();
   }
 
@@ -49,7 +49,7 @@ class InstallmentPlanStorage extends SqlContentEntityStorage implements Installm
    * {@inheritdoc}
    */
   public function clearRevisionsLanguage(LanguageInterface $language) {
-    return $this->database->update('commerce_installment_plan_rev')
+    return $this->database->update('installment_plan_revision')
       ->fields(['langcode' => LanguageInterface::LANGCODE_NOT_SPECIFIED])
       ->condition('langcode', $language->getId())
       ->execute();

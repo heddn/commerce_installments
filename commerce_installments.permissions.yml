@@ -1,3 +1,4 @@
+
 add installment plan entities:
   title: 'Create new Installment Plan entities'
 
@@ -16,6 +17,7 @@ access installment plan overview:
   title: 'Access the Installment Plan overview page'
 
 view installment plan entities:
+  title: 'View Installment Plan entities'
 
 view all installment plan revisions:
   title: 'View all Installment Plan revisions'
@@ -46,14 +48,3 @@ access installment overview:
 
 view installment entities:
   title: 'View Installment entities'
-
-view all installment revisions:
-  title: 'View all Installment revisions'
-
-revert all installment revisions:
-  title: 'Revert all Installment revisions'
-  description: 'Role requires permission <em>view Installment revisions</em> and <em>edit rights</em> for installment entities in question or <em>administer installment entities</em>.'
-
-delete all installment revisions:
-  title: 'Delete all revisions'
-  description: 'Role requires permission to <em>view Installment revisions</em> and <em>delete rights</em> for installment entities in question or <em>administer installment entities</em>.'

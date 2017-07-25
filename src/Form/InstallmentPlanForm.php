@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_installments\Form;
 
+use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Core\Entity\ContentEntityForm;
 use Drupal\Core\Form\FormStateInterface;
 
@@ -11,6 +12,8 @@ use Drupal\Core\Form\FormStateInterface;
  * @ingroup commerce_installments
  */
 class InstallmentPlanForm extends ContentEntityForm {
+
+  use UrlParameterBuilderTrait;
 
   /**
    * {@inheritdoc}
@@ -65,7 +68,7 @@ class InstallmentPlanForm extends ContentEntityForm {
           '%label' => $entity->label(),
         ]));
     }
-    $form_state->setRedirect('entity.commerce_installment_plan.canonical', ['commerce_installment_plan' => $entity->id()]);
+    $form_state->setRedirect('entity.installment_plan.canonical', ['installment_plan' => $entity->id()] + $this->getUrlParameters());
   }
 
 }

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains commerce_installment.page.inc.
+ * Contains installment.page.inc.
  *
  * Page callback for Installment entities.
  */
@@ -10,7 +10,7 @@
 use Drupal\Core\Render\Element;
 
 /**
- * Prepares variables for Installment templates.
+ * Prepares variables for Commerce Installment templates.
  *
  * Default template: commerce_installment.html.twig.
  *
@@ -21,7 +21,7 @@ use Drupal\Core\Render\Element;
  */
 function template_preprocess_commerce_installment(array &$variables) {
   // Fetch Installment Entity Object.
-  $commerce_installment = $variables['elements']['#installment'];
+  $installment = $variables['elements']['#installment'];
 
   // Helpful $content variable for templates.
   foreach (Element::children($variables['elements']) as $key) {

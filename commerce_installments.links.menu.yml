@@ -1,28 +1,15 @@
 
-# Installment Plan menu items definition
-entity.commerce_installment_plan.collection:
-  title: 'Installment Plan list'
-  route_name: entity.commerce_installment_plan.collection
-  description: 'List Installment Plan entities'
-  parent: system.admin_structure
-  weight: 100
+# Installment Plan type menu items definition
+entity.installment_plan_type.collection:
+  title: 'Installment plan types'
+  route_name: entity.installment_plan_type.collection
+  description: 'Manage your order installment plan types'
+  parent: commerce.configuration
 
-commerce_installment_plan.admin.structure.settings:
-  title: Installment Plan settings
-  description: 'Configure Installment Plan entities'
-  route_name: commerce_installment_plan.settings
-  parent: system.admin_structure
+# Installment type menu items definition
+entity.installment_type.collection:
+  title: 'Installment types'
+  route_name: entity.installment_type.collection
+  description: 'Manage your order installment types'
+  parent: commerce.configuration
 
-# Installment menu items definition
-entity.commerce_installment.collection:
-  title: 'Installment list'
-  route_name: entity.commerce_installment.collection
-  description: 'List Installment entities'
-  parent: system.admin_structure
-  weight: 100
-
-commerce_installment.admin.structure.settings:
-  title: Installment settings
-  description: 'Configure Installment entities'
-  route_name: commerce_installment.settings
-  parent: system.admin_structure

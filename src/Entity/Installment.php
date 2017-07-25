@@ -2,11 +2,14 @@
 
 namespace Drupal\commerce_installments\Entity;
 
+use Drupal\commerce_installments\UrlParameterBuilderTrait;
+use Drupal\commerce_price\Price;
+use Drupal\Core\Entity\ContentEntityBase;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Entity\RevisionableContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\user\UserInterface;
 
 /**
@@ -15,7 +18,7 @@ use Drupal\user\UserInterface;
  * @ingroup commerce_installments
  *
  * @ContentEntityType(
- *   id = "commerce_installment",
+ *   id = "installment",
  *   label = @Translation("Installment"),
  *   label_collection = @Translation("Installments"),
  *   label_singular = @Translation("installment"),
@@ -26,56 +29,48 @@ use Drupal\user\UserInterface;
  *   ),
  *   bundle_label = @Translation("Installment type"),
  *   handlers = {
- *     "storage" = "Drupal\commerce_installments\InstallmentStorage",
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
- *     "list_builder" = "Drupal\commerce_installments\InstallmentListBuilder",
  *     "views_data" = "Drupal\views\EntityViewsData",
  *     "translation" = "Drupal\content_translation\ContentTranslationHandler",
  *
  *     "form" = {
  *       "default" = "Drupal\commerce_installments\Form\InstallmentForm",
- *       "add" = "Drupal\commerce_installments\Form\InstallmentForm",
- *       "edit" = "Drupal\commerce_installments\Form\InstallmentForm",
- *       "delete" = "Drupal\Core\Entity\ContentEntityDeleteForm",
  *     },
  *     "access" = "Drupal\commerce_installments\InstallmentAccessControlHandler",
  *     "route_provider" = {
- *       "html" = "Drupal\commerce_installments\InstallmentHtmlRouteProvider",
+ *       "html" = "Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider",
  *     },
  *   },
- *   base_table = "commerce_installment",
- *   data_table = "commerce_installment_field_data",
- *   revision_table = "commerce_installment_revision",
- *   revision_data_table = "commerce_installment_field_revision",
- *   translatable = TRUE,
+ *   base_table = "installment",
+ *   data_table = "installment_field_data",
  *   admin_permission = "administer installment entities",
  *   entity_keys = {
  *     "id" = "installment_id",
- *     "revision" = "vid",
- *     "label" = "name",
+ *     "bundle" = "type",
  *     "uuid" = "uuid",
  *     "uid" = "user_id",
- *     "langcode" = "langcode",
- *     "status" = "status",
  *   },
  *   links = {
- *     "canonical" = "/installment/commerce_installment/{commerce_installment}",
- *     "add-form" = "/installment/commerce_installment/add",
- *     "edit-form" = "/installment/commerce_installment/{commerce_installment}/edit",
- *     "delete-form" = "/installment/commerce_installment/{commerce_installment}/delete",
- *     "version-history" = "/installment/commerce_installment/{commerce_installment}/revisions",
- *     "revision" = "/installment/commerce_installment/{commerce_installment}/revisions/{commerce_installment_revision}/view",
- *     "revision_revert" = "/installment/commerce_installment/{commerce_installment}/revisions/{commerce_installment_revision}/revert",
- *     "translation_revert" = "/installment/commerce_installment/{commerce_installment}/revisions/{commerce_installment_revision}/revert/{langcode}",
- *     "revision_delete" = "/installment/commerce_installment/{commerce_installment}/revisions/{commerce_installment_revision}/delete",
- *     "collection" = "/installment/commerce_installment",
+ *     "canonical" = "/admin/commerce/orders/{commerce_order}/plan/{installment_plan}/installment/{installment}",
+ *
  *   },
- *   field_ui_base_route = "commerce_installment.settings"
+ *   bundle_entity_type = "installment_type",
+ *   field_ui_base_route = "entity.installment_type.edit_form"
  * )
  */
-class Installment extends RevisionableContentEntityBase implements InstallmentInterface {
+class Installment extends ContentEntityBase implements InstallmentInterface {
 
   use EntityChangedTrait;
+  use UrlParameterBuilderTrait;
+  use StringTranslationTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function urlRouteParameters($rel) {
+    $uri_route_parameters = $this->getUrlParameters();
+    return $uri_route_parameters += parent::urlRouteParameters($rel);
+  }
 
   /**
    * {@inheritdoc}
@@ -90,38 +85,12 @@ class Installment extends RevisionableContentEntityBase implements InstallmentIn
   /**
    * {@inheritdoc}
    */
-  public function preSave(EntityStorageInterface $storage) {
-    parent::preSave($storage);
-
-    foreach (array_keys($this->getTranslationLanguages()) as $langcode) {
-      $translation = $this->getTranslation($langcode);
-
-      // If no owner has been set explicitly, make the anonymous user the owner.
-      if (!$translation->getOwner()) {
-        $translation->setOwnerId(0);
-      }
-    }
-
-    // If no revision author has been set explicitly, make the commerce_installment owner the
-    // revision author.
-    if (!$this->getRevisionUser()) {
-      $this->setRevisionUserId($this->getOwnerId());
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getName() {
-    return $this->get('name')->value;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setName($name) {
-    $this->set('name', $name);
-    return $this;
+  public function label() {
+    $args = [
+      ':amount' => $this->getAmount()->__toString(),
+      ':date' => \Drupal::getContainer()->get('date.formatter')->format($this->getPaymentDate(), 'html_date'),
+    ];
+    return $this->t(':amount on :date', $args);
   }
 
   /**
@@ -172,51 +141,122 @@ class Installment extends RevisionableContentEntityBase implements InstallmentIn
   /**
    * {@inheritdoc}
    */
+  public function getState() {
+    return $this->get('state')->first();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setPaymentDate($timestamp) {
+    $this->set('payment_date', $timestamp);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPaymentDate() {
+    return $this->get('payment_date')->value;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAmount() {
+    if (!$this->get('amount')->isEmpty()) {
+      return $this->get('amount')->first()->toPrice();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setAmount(Price $amount) {
+    $this->set('amount', $amount);
+    return $this;
+  }
+
+  /**
+   * Gets the workflow ID for the state field.
+   *
+   * @param \Drupal\commerce_installments\Entity\Installment $installment
+   *   The installment payment.
+   *
+   * @return string
+   *   The workflow ID.
+   */
+  public static function getWorkflowId(Installment $installment) {
+    $workflow = InstallmentType::load($installment->bundle())->getWorkflowId();
+    return $workflow;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 
     $fields['user_id'] = BaseFieldDefinition::create('entity_reference')
       ->setLabel(t('Authored by'))
       ->setDescription(t('The user ID of author of the Installment entity.'))
-      ->setRevisionable(TRUE)
       ->setSetting('target_type', 'user')
       ->setSetting('handler', 'default')
       ->setTranslatable(TRUE)
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE);
+
+    $fields['state'] = BaseFieldDefinition::create('state')
+      ->setLabel(t('State'))
+      ->setDescription(t('The installment payment state.'))
+      ->setSetting('max_length', 255)
+      ->setDisplayOptions('form', [
+        'type' => 'options_select',
+        'weight' => 2,
+      ])
       ->setDisplayOptions('view', [
-        'label' => 'hidden',
-        'type' => 'author',
+        'type' => 'state_transition_form',
+        'weight' => 2,
+        'label' => 'inline',
+      ])
+      ->setDisplayConfigurable('form', TRUE)
+      ->setDisplayConfigurable('view', TRUE)
+      ->setSetting('workflow_callback', ['\Drupal\commerce_installments\Entity\Installment', 'getWorkflowId']);
+
+    $fields['payment_date'] = BaseFieldDefinition::create('timestamp')
+      ->setLabel(t('Installment date'))
+      ->setDescription(t('The date to process installment payment.'))
+      ->setDisplayOptions('form', [
+        'type' => 'datetime_timestamp',
         'weight' => 0,
       ])
-      ->setDisplayOptions('form', [
-        'type' => 'entity_reference_autocomplete',
-        'weight' => 5,
+      ->setDisplayOptions('view', [
+        'type' => 'timestamp',
+        'weight' => 0,
         'settings' => [
-          'match_operator' => 'CONTAINS',
-          'size' => '60',
-          'autocomplete_type' => 'tags',
-          'placeholder' => '',
+          'date_format' => 'html_date',
         ],
+        'label' => 'inline',
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
 
-    $fields['name'] = BaseFieldDefinition::create('string')
-      ->setLabel(t('Name'))
-      ->setDescription(t('The name of the Installment entity.'))
-      ->setRevisionable(TRUE)
-      ->setSettings([
-        'max_length' => 50,
-        'text_processing' => 0,
-      ])
-      ->setDefaultValue('')
-      ->setDisplayOptions('view', [
-        'label' => 'above',
-        'type' => 'string',
-        'weight' => -4,
-      ])
+    $fields['amount'] = BaseFieldDefinition::create('commerce_price')
+      ->setLabel(t('Amount'))
+      ->setDescription(t('The payment amount.'))
+      ->setRequired(TRUE)
       ->setDisplayOptions('form', [
-        'type' => 'string_textfield',
-        'weight' => -4,
+        'type' => 'commerce_price_default',
+        'weight' => 1,
+      ])
+      ->setDisplayOptions('view', [
+        'type' => 'commerce_price_default',
+        'weight' => 1,
+        'settings' => [
+          'strip_trailing_zeroes' => FALSE,
+          'display_currency_code' => FALSE,
+        ],
+        'label' => 'inline',
       ])
       ->setDisplayConfigurable('form', TRUE)
       ->setDisplayConfigurable('view', TRUE);
@@ -228,13 +268,6 @@ class Installment extends RevisionableContentEntityBase implements InstallmentIn
     $fields['changed'] = BaseFieldDefinition::create('changed')
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the entity was last edited.'));
-
-    $fields['revision_translation_affected'] = BaseFieldDefinition::create('boolean')
-      ->setLabel(t('Revision translation affected'))
-      ->setDescription(t('Indicates if the last edit of a translation belongs to current revision.'))
-      ->setReadOnly(TRUE)
-      ->setRevisionable(TRUE)
-      ->setTranslatable(TRUE);
 
     return $fields;
   }

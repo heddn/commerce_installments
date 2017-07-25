@@ -30,13 +30,23 @@ function commerce_installments_theme() {
   $theme = [];
   $theme['commerce_installment_plan'] = [
     'render element' => 'elements',
-    'file' => 'commerce_installment_plan.page.inc',
-    'template' => 'commerce_installment_plan',
+    'file' => 'installment_plan.page.inc',
+    'template' => 'installment_plan',
+  ];
+  $theme['commerce_installment_plan_content_add_list'] = [
+    'render element' => 'content',
+    'variables' => ['content' => NULL],
+    'file' => 'installment_plan.page.inc',
   ];
   $theme['commerce_installment'] = [
     'render element' => 'elements',
-    'file' => 'commerce_installment.page.inc',
-    'template' => 'commerce_installment',
+    'file' => 'installment.page.inc',
+    'template' => 'installment',
+  ];
+  $theme['commerce_installment_content_add_list'] = [
+    'render element' => 'content',
+    'variables' => ['content' => NULL],
+    'file' => 'installment.page.inc',
   ];
   return $theme;
 }
@@ -44,32 +54,31 @@ function commerce_installments_theme() {
 /**
 * Implements hook_theme_suggestions_HOOK().
 */
-function commerce_installments_theme_suggestions_commerce_installment_plan(array $variables) {
+function commerce_installments_theme_suggestions_installment_plan(array $variables) {
   $suggestions = [];
-  $entity = $variables['elements']['#commerce_installment_plan'];
+  $entity = $variables['elements']['#installment_plan'];
   $sanitized_view_mode = strtr($variables['elements']['#view_mode'], '.', '_');
 
-  $suggestions[] = 'commerce_installment_plan__' . $sanitized_view_mode;
-  $suggestions[] = 'commerce_installment_plan__' . $entity->bundle();
-  $suggestions[] = 'commerce_installment_plan__' . $entity->bundle() . '__' . $sanitized_view_mode;
-  $suggestions[] = 'commerce_installment_plan__' . $entity->id();
-  $suggestions[] = 'commerce_installment_plan__' . $entity->id() . '__' . $sanitized_view_mode;
+  $suggestions[] = 'installment_plan__' . $sanitized_view_mode;
+  $suggestions[] = 'installment_plan__' . $entity->bundle();
+  $suggestions[] = 'installment_plan__' . $entity->bundle() . '__' . $sanitized_view_mode;
+  $suggestions[] = 'installment_plan__' . $entity->id();
+  $suggestions[] = 'installment_plan__' . $entity->id() . '__' . $sanitized_view_mode;
   return $suggestions;
 }
-
 
 /**
 * Implements hook_theme_suggestions_HOOK().
 */
-function commerce_installments_theme_suggestions_commerce_installment(array $variables) {
+function commerce_installments_theme_suggestions_installment(array $variables) {
   $suggestions = [];
-  $entity = $variables['elements']['#commerce_installment'];
+  $entity = $variables['elements']['#installment'];
   $sanitized_view_mode = strtr($variables['elements']['#view_mode'], '.', '_');
 
-  $suggestions[] = 'commerce_installment__' . $sanitized_view_mode;
-  $suggestions[] = 'commerce_installment__' . $entity->bundle();
-  $suggestions[] = 'commerce_installment__' . $entity->bundle() . '__' . $sanitized_view_mode;
-  $suggestions[] = 'commerce_installment__' . $entity->id();
-  $suggestions[] = 'commerce_installment__' . $entity->id() . '__' . $sanitized_view_mode;
+  $suggestions[] = 'installment__' . $sanitized_view_mode;
+  $suggestions[] = 'installment__' . $entity->bundle();
+  $suggestions[] = 'installment__' . $entity->bundle() . '__' . $sanitized_view_mode;
+  $suggestions[] = 'installment__' . $entity->id();
+  $suggestions[] = 'installment__' . $entity->id() . '__' . $sanitized_view_mode;
   return $suggestions;
 }

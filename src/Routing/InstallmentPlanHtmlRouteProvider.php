@@ -1,9 +1,10 @@
 <?php
 
-namespace Drupal\commerce_installments;
+namespace Drupal\commerce_installments\Routing;
 
+use Drupal\commerce_installments\Controller\InstallmentEntityController;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Entity\Routing\AdminHtmlRouteProvider;
+use Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider;
 use Symfony\Component\Routing\Route;
 
 /**
@@ -12,7 +13,7 @@ use Symfony\Component\Routing\Route;
  * @see \Drupal\Core\Entity\Routing\AdminHtmlRouteProvider
  * @see \Drupal\Core\Entity\Routing\DefaultHtmlRouteProvider
  */
-class InstallmentPlanHtmlRouteProvider extends AdminHtmlRouteProvider {
+class InstallmentPlanHtmlRouteProvider extends DefaultHtmlRouteProvider {
 
   /**
    * {@inheritdoc}
@@ -38,15 +39,16 @@ class InstallmentPlanHtmlRouteProvider extends AdminHtmlRouteProvider {
       $collection->add("entity.{$entity_type_id}.revision_delete", $delete_route);
     }
 
-    if ($translation_route = $this->getRevisionTranslationRevertRoute($entity_type)) {
-      $collection->add("{$entity_type_id}.revision_revert_translation_confirm", $translation_route);
-    }
-
-    if ($settings_form_route = $this->getSettingsFormRoute($entity_type)) {
-      $collection->add("$entity_type_id.settings", $settings_form_route);
-    }
-
     return $collection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function getAddPageRoute(EntityTypeInterface $entity_type) {
+    if ($route = parent::getAddPageRoute($entity_type)) {
+      return $route->setDefault('_controller', InstallmentEntityController::class . '::addPage');
+    }
   }
 
   /**
@@ -66,8 +68,7 @@ class InstallmentPlanHtmlRouteProvider extends AdminHtmlRouteProvider {
           '_title' => "{$entity_type->getLabel()} revisions",
           '_controller' => '\Drupal\commerce_installments\Controller\InstallmentPlanController::revisionOverview',
         ])
-        ->setRequirement('_permission', 'access installment plan revisions')
-        ->setOption('_admin_route', TRUE);
+        ->setRequirement('_permission', 'access installment plan revisions');
 
       return $route;
     }
@@ -90,8 +91,7 @@ class InstallmentPlanHtmlRouteProvider extends AdminHtmlRouteProvider {
           '_controller' => '\Drupal\commerce_installments\Controller\InstallmentPlanController::revisionShow',
           '_title_callback' => '\Drupal\commerce_installments\Controller\InstallmentPlanController::revisionPageTitle',
         ])
-        ->setRequirement('_permission', 'access installment plan revisions')
-        ->setOption('_admin_route', TRUE);
+        ->setRequirement('_permission', 'access installment plan revisions');
 
       return $route;
     }
@@ -114,8 +114,7 @@ class InstallmentPlanHtmlRouteProvider extends AdminHtmlRouteProvider {
           '_form' => '\Drupal\commerce_installments\Form\InstallmentPlanRevisionRevertForm',
           '_title' => 'Revert to earlier revision',
         ])
-        ->setRequirement('_permission', 'revert all installment plan revisions')
-        ->setOption('_admin_route', TRUE);
+        ->setRequirement('_permission', 'revert all installment plan revisions');
 
       return $route;
     }
@@ -138,56 +137,7 @@ class InstallmentPlanHtmlRouteProvider extends AdminHtmlRouteProvider {
           '_form' => '\Drupal\commerce_installments\Form\InstallmentPlanRevisionDeleteForm',
           '_title' => 'Delete earlier revision',
         ])
-        ->setRequirement('_permission', 'delete all installment plan revisions')
-        ->setOption('_admin_route', TRUE);
-
-      return $route;
-    }
-  }
-
-  /**
-   * Gets the revision translation revert route.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type.
-   *
-   * @return \Symfony\Component\Routing\Route|null
-   *   The generated route, if available.
-   */
-  protected function getRevisionTranslationRevertRoute(EntityTypeInterface $entity_type) {
-    if ($entity_type->hasLinkTemplate('translation_revert')) {
-      $route = new Route($entity_type->getLinkTemplate('translation_revert'));
-      $route
-        ->setDefaults([
-          '_form' => '\Drupal\commerce_installments\Form\InstallmentPlanRevisionRevertTranslationForm',
-          '_title' => 'Revert to earlier revision of a translation',
-        ])
-        ->setRequirement('_permission', 'revert all installment plan revisions')
-        ->setOption('_admin_route', TRUE);
-
-      return $route;
-    }
-  }
-
-  /**
-   * Gets the settings form route.
-   *
-   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
-   *   The entity type.
-   *
-   * @return \Symfony\Component\Routing\Route|null
-   *   The generated route, if available.
-   */
-  protected function getSettingsFormRoute(EntityTypeInterface $entity_type) {
-    if (!$entity_type->getBundleEntityType()) {
-      $route = new Route("/admin/structure/{$entity_type->id()}/settings");
-      $route
-        ->setDefaults([
-          '_form' => 'Drupal\commerce_installments\Form\InstallmentPlanSettingsForm',
-          '_title' => "{$entity_type->getLabel()} settings",
-        ])
-        ->setRequirement('_permission', $entity_type->getAdminPermission())
-        ->setOption('_admin_route', TRUE);
+        ->setRequirement('_permission', 'delete all installment plan revisions');
 
       return $route;
     }

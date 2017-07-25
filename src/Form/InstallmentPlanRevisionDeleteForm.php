@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_installments\Form;
 
+use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
@@ -16,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  */
 class InstallmentPlanRevisionDeleteForm extends ConfirmFormBase {
 
+  use UrlParameterBuilderTrait;
 
   /**
    * The Installment Plan revision.
@@ -55,9 +57,9 @@ class InstallmentPlanRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    $entity_manager = $container->get('entity.manager');
+    $entity_manager = $container->get('entity_type.manager');
     return new static(
-      $entity_manager->getStorage('commerce_installment_plan'),
+      $entity_manager->getStorage('installment_plan'),
       $container->get('database')
     );
   }
@@ -66,7 +68,7 @@ class InstallmentPlanRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'commerce_installment_plan_revision_delete_confirm';
+    return 'installment_plan_revision_delete_confirm';
   }
 
   /**
@@ -80,7 +82,7 @@ class InstallmentPlanRevisionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getCancelUrl() {
-    return new Url('entity.commerce_installment_plan.version_history', ['commerce_installment_plan' => $this->revision->id()]);
+    return new Url('entity.installment_plan.version_history', ['installment_plan' => $this->revision->id()] + $this->getUrlParameters());
   }
 
   /**
@@ -93,8 +95,8 @@ class InstallmentPlanRevisionDeleteForm extends ConfirmFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $commerce_installment_plan_revision = NULL) {
-    $this->revision = $this->InstallmentPlanStorage->loadRevision($commerce_installment_plan_revision);
+  public function buildForm(array $form, FormStateInterface $form_state, $installment_plan_revision = NULL) {
+    $this->revision = $this->InstallmentPlanStorage->loadRevision($installment_plan_revision);
     $form = parent::buildForm($form, $form_state);
 
     return $form;
@@ -109,13 +111,13 @@ class InstallmentPlanRevisionDeleteForm extends ConfirmFormBase {
     $this->logger('content')->notice('Installment Plan: deleted %title revision %revision.', ['%title' => $this->revision->label(), '%revision' => $this->revision->getRevisionId()]);
     drupal_set_message(t('Revision from %revision-date of Installment Plan %title has been deleted.', ['%revision-date' => format_date($this->revision->getRevisionCreationTime()), '%title' => $this->revision->label()]));
     $form_state->setRedirect(
-      'entity.commerce_installment_plan.canonical',
-       ['commerce_installment_plan' => $this->revision->id()]
+      'entity.installment_plan.canonical',
+       ['installment_plan' => $this->revision->id()] + $this->getUrlParameters()
     );
-    if ($this->connection->query('SELECT COUNT(DISTINCT vid) FROM {commerce_installment_plan_field_revision} WHERE id = :id', [':id' => $this->revision->id()])->fetchField() > 1) {
+    if ($this->connection->query('SELECT COUNT(DISTINCT vid) FROM {installment_plan_field_revision} WHERE plan_id = :id', [':id' => $this->revision->id()])->fetchField() > 1) {
       $form_state->setRedirect(
-        'entity.commerce_installment_plan.version_history',
-         ['commerce_installment_plan' => $this->revision->id()]
+        'entity.installment_plan.version_history',
+         ['installment_plan' => $this->revision->id()] + $this->getUrlParameters()
       );
     }
   }

@@ -4,7 +4,11 @@ namespace Drupal\commerce_installments;
 
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityListBuilder;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Link;
+use Drupal\Core\Routing\RouteMatchInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Defines a class to build a listing of Installment Plan entities.
@@ -13,6 +17,41 @@ use Drupal\Core\Link;
  */
 class InstallmentPlanListBuilder extends EntityListBuilder {
 
+  use UrlParameterBuilderTrait;
+
+  /**
+   * The route match.
+   *
+   * @var \Drupal\Core\Routing\RouteMatchInterface
+   */
+  protected $routeMatch;
+
+  /**
+   * Constructs a new EntityListBuilder object.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeInterface $entity_type
+   *   The entity type definition.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $storage
+   *   The entity storage class.
+   */
+  public function __construct(EntityTypeInterface $entity_type, EntityStorageInterface $storage, RouteMatchInterface $route_match) {
+    $this->entityTypeId = $entity_type->id();
+    $this->storage = $storage;
+    $this->entityType = $entity_type;
+    $this->routeMatch = $route_match;
+  }
+
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
+    return new static(
+      $entity_type,
+      $container->get('entity_type.manager')->getStorage($entity_type->id()),
+      $container->get('current_route_match')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -31,8 +70,8 @@ class InstallmentPlanListBuilder extends EntityListBuilder {
     $row['id'] = $entity->id();
     $row['name'] = Link::createFromRoute(
       $entity->label(),
-      'entity.commerce_installment_plan.edit_form',
-      ['commerce_installment_plan' => $entity->id()]
+      'entity.installment_plan.edit_form',
+      ['installment_plan' => $entity->id()] + $this->getUrlParameters()
     );
     return $row + parent::buildRow($entity);
   }

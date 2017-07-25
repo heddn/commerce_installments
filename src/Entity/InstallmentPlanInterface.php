@@ -2,6 +2,8 @@
 
 namespace Drupal\commerce_installments\Entity;
 
+use Drupal\commerce_payment\Entity\EntityWithPaymentGatewayInterface;
+use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Entity\RevisionableInterface;
 use Drupal\Core\Entity\EntityChangedInterface;
@@ -12,28 +14,39 @@ use Drupal\user\EntityOwnerInterface;
  *
  * @ingroup commerce_installments
  */
-interface InstallmentPlanInterface extends RevisionableInterface, RevisionLogInterface, EntityChangedInterface, EntityOwnerInterface {
-
-  // Add get/set methods for your configuration properties here.
+interface InstallmentPlanInterface extends ContentEntityInterface, RevisionLogInterface, EntityChangedInterface, EntityWithPaymentGatewayInterface {
 
   /**
-   * Gets the Installment Plan name.
+   * Gets the payment method.
    *
-   * @return string
-   *   Name of the Installment Plan.
+   * @return \Drupal\commerce_payment\Entity\PaymentMethodInterface|null
+   *   The payment method entity, or null if unknown.
    */
-  public function getName();
+  public function getPaymentMethod();
 
   /**
-   * Sets the Installment Plan name.
+   * Gets the payment method ID.
    *
-   * @param string $name
-   *   The Installment Plan name.
-   *
-   * @return \Drupal\commerce_installments\Entity\InstallmentPlanInterface
-   *   The called Installment Plan entity.
+   * @return int|null
+   *   The payment method ID, or null if unknown.
    */
-  public function setName($name);
+  public function getPaymentMethodId();
+
+  /**
+   * Gets the parent order.
+   *
+   * @return \Drupal\commerce_order\Entity\OrderInterface|null
+   *   The order entity, or null.
+   */
+  public function getOrder();
+
+  /**
+   * Gets the parent order ID.
+   *
+   * @return int|null
+   *   The order ID, or null.
+   */
+  public function getOrderId();
 
   /**
    * Gets the Installment Plan creation timestamp.
