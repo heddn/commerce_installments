@@ -53,6 +53,8 @@ class InstallmentPlanTypeForm extends BundleEntityFormBase {
         drupal_set_message($this->t('Created the %label Installment Plan type.', [
           '%label' => $installment_plan_type->label(),
         ]));
+        commerce_installments_add_installments_field($this->entity);
+
         break;
 
       default:

@@ -2,12 +2,12 @@
 
 namespace Drupal\commerce_installments\Form;
 
+use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
-use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**

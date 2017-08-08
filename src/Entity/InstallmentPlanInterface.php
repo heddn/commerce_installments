@@ -4,9 +4,8 @@ namespace Drupal\commerce_installments\Entity;
 
 use Drupal\commerce_payment\Entity\EntityWithPaymentGatewayInterface;
 use Drupal\Core\Entity\ContentEntityInterface;
-use Drupal\Core\Entity\RevisionLogInterface;
-
 use Drupal\Core\Entity\EntityChangedInterface;
+use Drupal\Core\Entity\RevisionLogInterface;
 
 
 /**
@@ -47,6 +46,63 @@ interface InstallmentPlanInterface extends ContentEntityInterface, RevisionLogIn
    *   The order ID, or null.
    */
   public function getOrderId();
+
+  /**
+   * Gets the installments.
+   *
+   * @return \Drupal\commerce_installments\Entity\InstallmentInterface[]
+   *   The installments.
+   */
+  public function getInstallments();
+
+  /**
+   * Sets the installments.
+   *
+   * @param \Drupal\commerce_installments\Entity\InstallmentInterface[] $installments
+   *   The installments.
+   *
+   * @return $this
+   */
+  public function setInstallments(array $installments);
+
+  /**
+   * Gets whether the plan has installments.
+   *
+   * @return bool
+   *   TRUE if the plan has installments, FALSE otherwise.
+   */
+  public function hasInstallments();
+
+  /**
+   * Adds an installment.
+   *
+   * @param \Drupal\commerce_installments\Entity\InstallmentInterface $installment
+   *   The installment.
+   *
+   * @return $this
+   */
+  public function addInstallment(InstallmentInterface $installment);
+
+  /**
+   * Removes an installment.
+   *
+   * @param \Drupal\commerce_installments\Entity\InstallmentInterface $installment
+   *   The installment.
+   *
+   * @return $this
+   */
+  public function removeInstallment(InstallmentInterface $installment);
+
+  /**
+   * Checks whether the plan has a given installment.
+   *
+   * @param \Drupal\commerce_installments\Entity\InstallmentInterface $installment
+   *   The installment.
+   *
+   * @return bool
+   *   TRUE if the installment was found, FALSE otherwise.
+   */
+  public function hasInstallment(InstallmentInterface $installment);
 
   /**
    * Gets the Installment Plan creation timestamp.

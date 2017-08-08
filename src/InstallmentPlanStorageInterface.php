@@ -2,10 +2,10 @@
 
 namespace Drupal\commerce_installments;
 
-use Drupal\Core\Entity\ContentEntityStorageInterface;
-use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\Language\LanguageInterface;
 use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
+use Drupal\Core\Entity\ContentEntityStorageInterface;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Session\AccountInterface;
 
 /**
  * Defines the storage handler class for Installment Plan entities.

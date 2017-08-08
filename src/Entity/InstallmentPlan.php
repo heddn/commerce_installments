@@ -3,12 +3,11 @@
 namespace Drupal\commerce_installments\Entity;
 
 use Drupal\commerce_installments\UrlParameterBuilderTrait;
-
-use Drupal\Core\Entity\EntityStorageInterface;
-use Drupal\Core\Field\BaseFieldDefinition;
-use Drupal\Core\Entity\RevisionableContentEntityBase;
 use Drupal\Core\Entity\EntityChangedTrait;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Entity\RevisionableContentEntityBase;
+use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\user\UserInterface;
 
@@ -206,6 +205,74 @@ class InstallmentPlan extends RevisionableContentEntityBase implements Installme
   }
 
   /**
+   * @inheritDoc
+   */
+  public function getInstallments() {
+    $this->get('installments')->referencedEntities();
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function setInstallments(array $installments) {
+    $this->set('installments', $installments);
+    return $this;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function hasInstallments() {
+    return !$this->get('installments')->isEmpty();
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function addInstallment(InstallmentInterface $installment) {
+    if (!$this->hasInstallment($installment)) {
+      $this->get('installments')->appendItem($installment);
+    }
+    return $this;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function removeInstallment(InstallmentInterface $installment) {
+    $index = $this->getInstallmentIndex($installment);
+    if ($index !== FALSE) {
+      $this->get('installments')->offsetUnset($index);
+    }
+    return $this;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function hasInstallment(InstallmentInterface $installment) {
+    return $this->getInstallmentIndex($installment) !== FALSE;
+  }
+
+  /**
+   * Gets the index of the given installment.
+   *
+   * @param \Drupal\commerce_installments\Entity\InstallmentInterface $installment
+   *   The installment.
+   *
+   * @return int|bool
+   *   The index of the given installment, or FALSE if not found.
+   */
+  protected function getInstallmentIndex(InstallmentInterface $installment) {
+    $values = $this->get('installments')->getValue();
+    $installments = array_map(function ($value) {
+      return $value['target_id'];
+    }, $values);
+
+    return array_search($installment->id(), $installments);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
@@ -285,34 +352,6 @@ class InstallmentPlan extends RevisionableContentEntityBase implements Installme
         'weight' => 2,
         'settings' => [
           'link' => TRUE,
-        ]
-      ])
-      ->setDisplayConfigurable('view', TRUE)
-      ->setDisplayConfigurable('form', TRUE);
-
-    $fields['installments'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('Installments'))
-      ->setRevisionable(TRUE)
-      ->setSetting('target_type', 'installment')
-      ->setDisplayOptions('form', [
-        'label' => 'hidden',
-        'type' => 'inline_entity_form_complex',
-        'weight' => 3,
-        'settings' => [
-          'form_mode' => 'default',
-          'label_singular' => '',
-          'allow_new' => TRUE,
-          'match_operator' => 'CONTAINS',
-          'override_labels' => FALSE,
-          'allow_existing' => FALSE,
-        ],
-      ])
-      ->setDisplayOptions('view', [
-        'label' => 'hidden',
-        'type' => 'entity_reference_label',
-        'weight' => 3,
-        'settings' => [
-          'link' => FALSE,
         ]
       ])
       ->setDisplayConfigurable('view', TRUE)

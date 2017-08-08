@@ -5,6 +5,8 @@
  * Contains commerce_installments.module.
  */
 
+use Drupal\commerce\BundleFieldDefinition;
+use Drupal\commerce_installments\Entity\InstallmentPlanTypeInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -79,4 +81,43 @@ function commerce_installments_theme_suggestions_installment(array $variables) {
   $suggestions[] = 'installment__' . $entity->id();
   $suggestions[] = 'installment__' . $entity->id() . '__' . $sanitized_view_mode;
   return $suggestions;
+}
+/**
+ * Adds the default installments field to an installment plan type.
+ *
+ * @param \Drupal\commerce_installments\Entity\InstallmentPlanTypeInterface $installmentPlanType
+ *   The installment plan type.
+ */
+function commerce_installments_add_installments_field(InstallmentPlanTypeInterface $installmentPlanType = NULL) {
+  $field_definition = BundleFieldDefinition::create('entity_reference')
+    ->setTargetEntityTypeId('installment_plan')
+    //->setTargetBundle($installmentPlanType->id())
+    ->setTargetBundle('installment_plan')
+    ->setName('installments')
+    ->setRevisionable(TRUE)
+    ->setCardinality(BundleFieldDefinition::CARDINALITY_UNLIMITED)
+    ->setRequired(TRUE)
+    ->setSetting('target_type', 'installment')
+    ->setSetting('handler', 'default')
+    ->setDisplayOptions('form', [
+      'label' => 'hidden',
+      'type' => 'inline_entity_form_complex',
+      'weight' => 3,
+      'settings' => [
+        'override_labels' => TRUE,
+        'label_singular' => 'installment',
+        'label_plural' => 'installments',
+      ],
+    ])
+    ->setDisplayOptions('view', [
+      'label' => 'hidden',
+      'type' => 'entity_reference_label',
+      'weight' => 3,
+      'settings' => [
+        'link' => FALSE,
+      ]
+    ]);
+
+  $configurable_field_manager = \Drupal::service('commerce.configurable_field_manager');
+  $configurable_field_manager->createField($field_definition);
 }

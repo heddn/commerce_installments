@@ -2,6 +2,7 @@
 
 namespace Drupal\commerce_installments\Form;
 
+use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
 use Drupal\commerce_installments\UrlParameterBuilderTrait;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Datetime\DateFormatterInterface;
@@ -9,7 +10,6 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Form\ConfirmFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\commerce_installments\Entity\InstallmentPlanInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
