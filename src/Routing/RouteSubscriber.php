@@ -2,7 +2,7 @@
 
 namespace Drupal\commerce_installments\Routing;
 
-use Drupal\commerce_installments\Plugin\InstallmentPlanManager;
+use Drupal\commerce_installments\Plugin\InstallmentPlanMethodManager;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Routing\RouteSubscriberBase;
 use Symfony\Component\Routing\Route;
@@ -23,7 +23,7 @@ class RouteSubscriber extends RouteSubscriberBase {
   protected $entityTypeManager;
 
   /**
-   * @var \Drupal\commerce_installments\Plugin\InstallmentPlanManager
+   * @var \Drupal\commerce_installments\Plugin\InstallmentPlanMethodManager
    */
   protected $manager;
 
@@ -33,7 +33,7 @@ class RouteSubscriber extends RouteSubscriberBase {
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity manager.
    */
-  public function __construct(EntityTypeManagerInterface $entityTypeManager, InstallmentPlanManager $manager) {
+  public function __construct(EntityTypeManagerInterface $entityTypeManager, InstallmentPlanMethodManager $manager) {
     $this->entityTypeManager = $entityTypeManager;
     $this->manager = $manager;
   }
@@ -56,9 +56,9 @@ class RouteSubscriber extends RouteSubscriberBase {
     }
 
     foreach ($this->manager->getDefinitions() as $definition) {
-      if ($setting_route = $this->getSettingRoute($definition)) {
+      /*if ($setting_route = $this->getSettingRoute($definition)) {
         $collection->add('commerce_installment_plan_settings_' . $definition['id'], $setting_route);
-      }
+      }*/
     }
   }
 

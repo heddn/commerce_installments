@@ -3,16 +3,16 @@
 namespace Drupal\commerce_installments\Plugin;
 
 use Drupal\commerce_installments\Annotation\InstallmentPlan;
-use Drupal\commerce_installments\Plugin\Commerce\InstallmentPlan\InstallmentPlanInterface;
+use Drupal\commerce_installments\Plugin\Commerce\InstallmentPlanMethod\InstallmentPlanMethodInterface;
 use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Plugin\DefaultPluginManager;
 
 /**
- * Provides the Installment Plan plugin manager.
+ * Provides the Installment Plan Method plugin manager.
  */
-class InstallmentPlanManager extends DefaultPluginManager {
+class InstallmentPlanMethodManager extends DefaultPluginManager {
 
   /**
    * Default values for each installment plan plugin.
@@ -36,7 +36,7 @@ class InstallmentPlanManager extends DefaultPluginManager {
    *   The module handler to invoke the alter hook with.
    */
   public function __construct(\Traversable $namespaces, CacheBackendInterface $cache_backend, ModuleHandlerInterface $module_handler) {
-    parent::__construct('Plugin/Commerce/InstallmentPlan', $namespaces, $module_handler, InstallmentPlanInterface::class, InstallmentPlan::class);
+    parent::__construct('Plugin/Commerce/InstallmentPlanMethod', $namespaces, $module_handler, InstallmentPlanMethodInterface::class, InstallmentPlan::class);
 
     $this->alterInfo('commerce_installment_plan_info');
     $this->setCacheBackend($cache_backend, 'commerce_installment_plan_plugins');

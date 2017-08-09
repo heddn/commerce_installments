@@ -1,13 +1,14 @@
 <?php
 
-namespace Drupal\commerce_installments\Plugin\Commerce\InstallmentPlan;
+namespace Drupal\commerce_installments\Plugin\Commerce\InstallmentPlanMethod;
 
+use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_price\Price;
-use Drupal\Component\Datetime\DateTimePlus;
-use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Datetime\Entity\DateFormat;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -17,9 +18,9 @@ use Drupal\options\Plugin\Field\FieldType\ListItemBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Base class for Installment Plan plugins.
+ * Base class for Installment Plan Method plugins.
  */
-abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlanInterface, ContainerFactoryPluginInterface {
+abstract class InstallmentPlanMethodMethodBase extends PluginBase implements InstallmentPlanMethodInterface, ContainerFactoryPluginInterface {
 
   use StringTranslationTrait;
 
@@ -51,11 +52,6 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
   protected $installmentPlanStorage;
 
   /**
-   * @var \Drupal\Component\Datetime\TimeInterface
-   */
-  protected $time;
-
-  /**
    *    * Constructs a Drupal\Component\Plugin\PluginBase object.
    *
    * @param array $configuration
@@ -68,17 +64,14 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
    *   The config factory.
    * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entityTypeBundleInfo
    *   The entity type bundle info.
-   * @param \Drupal\Component\Datetime\TimeInterface $time
-   *   The time service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entityTypeManager, ConfigFactoryInterface $configFactory, EntityTypeBundleInfoInterface $entityTypeBundleInfo, TimeInterface $time) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entityTypeManager, ConfigFactoryInterface $configFactory, EntityTypeBundleInfoInterface $entityTypeBundleInfo) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityTypeManager = $entityTypeManager;
     $this->installmentStorage = $this->entityTypeManager->getStorage('installment');
     $this->installmentPlanStorage = $this->entityTypeManager->getStorage('installment_plan');
     $this->configFactory = $configFactory;
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
-    $this->time = $time;
 
     $this->setConfiguration($configuration);
   }
@@ -94,9 +87,21 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
       $plugin_definition,
       $container->get('entity_type.manager'),
       $container->get('config.factory'),
-      $container->get('entity_type.bundle.info'),
-      $container->get('datetime.time')
+      $container->get('entity_type.bundle.info')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    return [
+      'installment_plan_bundle' => 'installment_plan',
+      'installment_bundle' => 'installment',
+      'number_payments' => [2 => 2],
+      'time_of_day' => (new DrupalDateTime())->format(DateFormat::load('html_time')->getPattern()),
+      'timezone' => $this->configFactory->get('system.date')->get('timezone.default'),
+    ];
   }
 
   /**
@@ -110,20 +115,10 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
    * {@inheritdoc}
    */
   public function setConfiguration(array $configuration) {
-    $this->configuration = NestedArray::mergeDeep($this->defaultConfiguration(), $configuration);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function defaultConfiguration() {
-    return [
-      'installment_plan_bundle' => 'installment_plan',
-      'installment_bundle' => 'installment',
-      'number_payments' => [2 => 2],
-      'time' => DateTimePlus::createFromTimestamp($this->time->getRequestTime())->format('H:i:s'),
-      'timezone' => $this->configFactory->get('system.date')->get('timezone.default'),
-    ];
+    if (empty($configuration)) {
+      $configuration = NestedArray::mergeDeepArray([$this->defaultConfiguration(), $configuration], TRUE);
+    }
+    $this->configuration = $configuration;
   }
 
   /**
@@ -133,12 +128,12 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
     $planBundles = [];
     $bundleInfo = $this->entityTypeBundleInfo->getBundleInfo('installment_plan');
     foreach (array_keys($bundleInfo) as $bundle) {
-      $planBundles[$bundle] = $bundleInfo['$bundle']['label'];
+      $planBundles[$bundle] = $bundleInfo[$bundle]['label'];
     }
     $installmentBundles = [];
     $bundleInfo = $this->entityTypeBundleInfo->getBundleInfo('installment');
     foreach (array_keys($bundleInfo) as $bundle) {
-      $installmentBundles[$bundle] = $bundleInfo['$bundle']['label'];
+      $installmentBundles[$bundle] = $bundleInfo[$bundle]['label'];
     }
 
     $form['installment_plan_bundle'] = [
@@ -161,15 +156,21 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
       '#description' => $this->t('List the number of payments to spread the purchase.'),
       '#default_value' => $this->allowedValuesString($this->getConfiguration()['number_payments']),
       '#element_validate' => [[ListItemBase::class, 'validateAllowedValues']],
+      '#field_has_data' => TRUE,
+      '#allowed_values' => [],
+      '#entity_type' => '',
+      '#field_name' => '',
       '#rows' => 10,
     ];
-    $form['time'] = [
-      '#type' => 'datetime',
+    $form['time_of_day'] = [
+      '#type' => 'date',
       '#title' => $this->t('Time'),
-      '#date_date_element' => 'none',
-      '#date_time_element' => 'time',
+      '#date_date_format' => DateFormat::load('html_time')->getPattern(),
       '#description' => $this->t('Time of day to execute purchase.'),
-      '#default_value' => $this->getConfiguration()['time'],
+      '#default_value' => $this->getConfiguration()['time_of_day'],
+      '#attributes' => [
+        'type' => 'time',
+      ],
       '#required' => TRUE,
     ];
     $form['timezone'] = [
@@ -203,9 +204,53 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
     if (!$form_state->getErrors()) {
       $values = $form_state->getValue($form['#parents']);
       foreach ($values as $key => $value) {
-        $this->configuration[$key] = $values;
+        $this->configuration[$key] = $value;
       }
     }
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function buildInstallments(OrderInterface $order, $numberPayments) {
+    $planEntity = $this->installmentPlanStorage->create([
+      'type' => $this->getInstallmentPlanBundle(),
+      'order_id' => $order->id(),
+      'payment_gateway' => $order->payment_gateway->entity,
+      'payment_method' => $order->payment_method->entity,
+    ]);
+
+    $installmentPayments = $this->getInstallmentAmounts($numberPayments, $order->getTotalPrice());
+    $installmentDates = $this->getInstallmentDates($numberPayments);
+
+    foreach ($installmentPayments as $delta => $payment) {
+      $installmentEntity = $this->installmentStorage->create([
+        'type' => $this->getInstallmentBundle(),
+        'payment_date' => $installmentDates[$delta]->format('U'),
+        'amount' => $payment,
+      ]);
+      $installmentEntity->save();
+      $planEntity->addInstallment($installmentEntity);
+    }
+    $planEntity->save();
+
+    return $planEntity;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function getInstallmentAmounts($numberPayments, Price $totalPrice) {
+    $installmentAmount = $totalPrice->divide($numberPayments);
+    $payments = array_fill(0, $numberPayments, $installmentAmount);
+    $multipliedAmount = $installmentAmount->multiply($numberPayments);
+    $difference = $totalPrice->subtract($multipliedAmount);
+    if ($difference->getNumber()){
+      array_pop($payments);
+      array_push($payments, $installmentAmount->add($difference));
+    }
+
+    return $payments;
   }
 
   /**
@@ -219,7 +264,7 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
    * @inheritDoc
    */
   public function getTime() {
-    return $this->getConfiguration()['time'];
+    return $this->getConfiguration()['time_of_day'];
   }
 
   /**
@@ -248,22 +293,6 @@ abstract class InstallmentPlanBase extends PluginBase implements InstallmentPlan
    */
   public function getInstallmentBundle() {
     return $this->getConfiguration()['installment_bundle'];
-  }
-
-  /**
-   * @inheritDoc
-   */
-  public function getInstallmentAmounts($numberPayments, Price $totalPrice) {
-    $installmentAmount = $totalPrice->divide($numberPayments);
-    $payments = array_fill(0, $numberPayments, $installmentAmount);
-    $multipliedAmount = $installmentAmount->multiply($numberPayments);
-    $difference = $totalPrice->subtract($multipliedAmount);
-    if ($difference->getNumber()){
-      array_pop($payments);
-      array_push($payments, $installmentAmount->add($difference));
-    }
-
-    return $payments;
   }
 
   /**

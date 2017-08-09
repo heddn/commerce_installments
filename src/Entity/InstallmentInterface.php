@@ -42,6 +42,16 @@ interface InstallmentInterface extends ContentEntityInterface, EntityChangedInte
   public function getState();
 
   /**
+   * Sets the payment state.
+   *
+   * @param string $state_id
+   *   The new state ID.
+   *
+   * @return $this
+   */
+  public function setState($state_id);
+
+  /**
    * Sets the date (timestamp) to process installment payment.
    *
    * @param int $timestamp
@@ -76,5 +86,12 @@ interface InstallmentInterface extends ContentEntityInterface, EntityChangedInte
    * @return $this
    */
   public function setAmount(Price $amount);
+
+  /**
+   * Get the related installment plan.
+   *
+   * @return \Drupal\commerce_installments\Entity\InstallmentPlanInterface
+   */
+  public function getInstallmentPlan();
 
 }

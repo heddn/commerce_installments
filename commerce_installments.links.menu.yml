@@ -1,3 +1,9 @@
+# Installment Plan Method menu items definition
+entity.installment_plan_method.collection:
+  title: 'Installment plan methods'
+  route_name: entity.installment_plan_method.collection
+  parent: commerce.configuration
+  description: 'Manage your installment plan methods.'
 
 # Installment Plan type menu items definition
 entity.installment_plan_type.collection:

@@ -7,6 +7,11 @@
 
 use Drupal\commerce\BundleFieldDefinition;
 use Drupal\commerce_installments\Entity\InstallmentPlanTypeInterface;
+use Drupal\commerce_payment\Exception\DeclineException;
+use Drupal\commerce_payment\Exception\PaymentGatewayException;
+use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\ManualPaymentGatewayInterface;
+use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayInterface;
+use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OnsitePaymentGatewayInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -120,4 +125,60 @@ function commerce_installments_add_installments_field(InstallmentPlanTypeInterfa
 
   $configurable_field_manager = \Drupal::service('commerce.configurable_field_manager');
   $configurable_field_manager->createField($field_definition);
+}
+
+/**
+ * Implements hook_cron().
+ */
+function commerce_installments_cron() {
+  /** @var \Drupal\Core\Entity\ContentEntityStorageInterface $installmentStorage */
+  $installmentStorage = \Drupal::service('entity_type.manager')->getStorage('installment');
+  $query = $installmentStorage->getQuery()
+    ->condition('payment_date', \Drupal::time()->getRequestTime(), '<')
+    ->condition('state', 'pending');
+
+  $results = $query->execute();
+  /** @var \Drupal\commerce_installments\Entity\InstallmentInterface[] $installments */
+  $installments = $installmentStorage->loadMultiple($results);
+
+  foreach ($installments as $installment) {
+    $plan = $installment->getInstallmentPlan();
+    if (!$plan->getPaymentGateway()) {
+      \Drupal::logger('commerce_installments')->error('No payment gateway selected for plan: %pid and installment %iid', ['%pid' => $plan->id(), '%iid' => $installment->id()]);
+    }
+
+    /** @var \Drupal\commerce_payment\Entity\PaymentGatewayInterface $payment_gateway */
+    $payment_gateway = $plan->getPaymentGateway();
+    $payment_gateway_plugin = $payment_gateway->getPlugin();
+
+    if ($payment_gateway_plugin instanceof OnsitePaymentGatewayInterface) {
+      /** @var \Drupal\Core\Entity\EntityStorageInterface $payment_storage */
+      $payment_storage = \Drupal::service('entity_type.manager')->getStorage('commerce_payment');
+      /** @var \Drupal\commerce_payment\Entity\PaymentInterface $payment */
+      $payment = $payment_storage->create([
+        'state' => 'new',
+        'amount' => $installment->getAmount(),
+        'payment_gateway' => $payment_gateway->id(),
+        'order_id' => $plan->getOrderId(),
+      ]);
+
+      try {
+        $payment->payment_method = $plan->getPaymentMethod();
+        $payment_gateway_plugin->createPayment($payment);
+      }
+      catch (DeclineException $e) {
+        \Drupal::logger('commerce_installments')->error($e->getMessage());
+        \Drupal::logger('commerce_installments')->error('DeclineException for plan: %pid and installment %iid', ['%pid' => $plan->id(), '%iid' => $installment->id()]);
+      }
+      catch (PaymentGatewayException $e) {
+        \Drupal::logger('commerce_installments')->error($e->getMessage());
+        \Drupal::logger('commerce_installments')->error('PaymentGatewayException for plan: %pid and installment %iid', ['%pid' => $plan->id(), '%iid' => $installment->id()]);
+        $installment->setState('paid');
+        $installment->save();
+      }
+    }
+    else {
+      \Drupal::logger('commerce_installments')->error('Payment gateway type is invalid for plan: %pid and installment %iid', ['%pid' => $plan->id(), '%iid' => $installment->id()]);
+    }
+  }
 }

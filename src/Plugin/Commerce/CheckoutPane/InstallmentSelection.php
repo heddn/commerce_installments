@@ -5,10 +5,12 @@ namespace Drupal\commerce_installments\Plugin\Commerce\CheckoutPane;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutFlow\CheckoutFlowInterface;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutPane\CheckoutPaneBase;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutPane\CheckoutPaneInterface;
-use Drupal\commerce_installments\Plugin\InstallmentPlanManager;
+use Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface;
 use Drupal\commerce_price\NumberFormatterFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -28,10 +30,13 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
   /** @var \Drupal\commerce_installments\Entity\InstallmentPlanInterface */
   protected $installmentPlanStorage;
 
+  /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface */
+  protected $installmentPlanMethodStorage;
+
   /** @var \Drupal\Core\Entity\EntityStorageInterface $currencyStorage */
   protected $currencyStorage;
 
-  /** @var \Drupal\commerce_installments\Plugin\InstallmentPlanManager $installmentPlanManager */
+  /** @var \Drupal\commerce_installments\Plugin\InstallmentPlanMethodManager $installmentPlanManager */
   protected $installmentPlanManager;
 
   /** @var \CommerceGuys\Intl\Formatter\NumberFormatterInterface $numberFormatter */
@@ -50,18 +55,16 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
    *   The parent checkout flow.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\commerce_installments\Plugin\InstallmentPlanManager $installment_plan_manager
-   *   The installment plan manager.
    * @param \Drupal\commerce_price\NumberFormatterFactoryInterface $numberFormatter
    *   The number formatter.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, CheckoutFlowInterface $checkout_flow, EntityTypeManagerInterface $entity_type_manager, InstallmentPlanManager $installment_plan_manager, NumberFormatterFactoryInterface $numberFormatter) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, CheckoutFlowInterface $checkout_flow, EntityTypeManagerInterface $entity_type_manager, NumberFormatterFactoryInterface $numberFormatter) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $checkout_flow, $entity_type_manager);
 
     $this->installmentStorage = $this->entityTypeManager->getStorage('installment');
     $this->installmentPlanStorage = $this->entityTypeManager->getStorage('installment_plan');
+    $this->installmentPlanMethodStorage = $this->entityTypeManager->getStorage('installment_plan_method');
     $this->currencyStorage = $this->entityTypeManager->getStorage('commerce_currency');
-    $this->installmentPlanManager = $installment_plan_manager;
     $this->numberFormatter = $numberFormatter->createInstance();
   }
 
@@ -75,7 +78,6 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
       $plugin_definition,
       $checkout_flow,
       $container->get('entity_type.manager'),
-      $container->get('plugin.manager.installment_plan'),
       $container->get('commerce_price.number_formatter_factory')
     );
   }
@@ -93,9 +95,7 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
    * {@inheritdoc}
    */
   public function buildConfigurationSummary() {
-    $plan = $this->installmentPlanManager->getDefinition($this->getConfiguration()['installment_plan']);
-
-    return $this->t('Installment plan: %plan', ['%plan' => $plan['label']]);
+    return $this->t('Installment plan: %plan', ['%plan' => $this->getConfiguration()['installment_plan']]);
   }
 
   /**
@@ -104,10 +104,12 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
   public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
-    $plans = $this->installmentPlanManager->getDefinitions();
-    $keys = array_column($plans, 'id');
-    $labels = array_column($plans, 'label');
-    $plans = array_combine($keys, $labels);
+    /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface[] $plans */
+    $plans = $this->installmentPlanMethodStorage->loadMultiple();
+
+    $plans = array_map(function (InstallmentPlanMethodInterface $plan) {
+      return $plan->label();
+    }, $plans);
 
     $form['installment_plan'] = [
       '#type' => 'select',
@@ -116,6 +118,11 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
       '#options' => $plans,
     ];
 
+    if (empty($plans)) {
+      $link = Link::createFromRoute($this->t('create'), 'entity.installment_plan_method.add_form');
+      $form['installment_plan']['#description'] = $this->t('You must first @create an installment plan method.', ['@create' => $link->toString()]);
+    }
+
     return $form;
   }
 
@@ -123,18 +130,26 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
    * {@inheritdoc}
    */
   public function buildPaneForm(array $pane_form, FormStateInterface $form_state, array &$complete_form) {
-    /** @var \Drupal\commerce_installments\Plugin\Commerce\InstallmentPlan\InstallmentPlanInterface $plan */
-    $plan = $this->installmentPlanManager->createInstance($this->getConfiguration()['installment_plan'], $this->getConfiguration());
+    /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface */
+    if ($plan = $this->installmentPlanMethodStorage->load($this->getConfiguration()['installment_plan'])) {
+      $pane_form['number_payments'] = [
+        '#type' => 'select',
+        '#title' => $this->t('Number of %plan', ['%plan' => $plan->label()]),
+        '#options' => [0 => $this->t('None')] + $plan->getPluginConfiguration()['number_payments'],
+        '#default_value' => $this->order->getData('commerce_installments_number_payments', 2),
+        '#description' => $this->t('This is optional, an installment plan is not required.'),
+      ];
 
-    $pane_form['number_payments'] = [
-      '#type' => 'select',
-      '#title' => $this->t('Number of %plan', ['%plan' => $plan->getLabel()]),
-      '#options' => [0 => $this->t('None')] + $plan->getNumberPayments(),
-      '#default_value' => $this->order->getData('commerce_installments_number_payments', 2),
-      '#description' => $this->t('This is optional, an installment plan is not required.'),
-    ];
+      return $pane_form;
+    }
+    else {
+      $link = Link::createFromRoute($this->t('create'), 'entity.installment_plan_method.add_form');
+      return [
+        '#type' => 'markup',
+        '#markup' => $this->t('You must first @create an installment plan method.', ['@create' => $link->toString()]),
+      ];
+    }
 
-    return $pane_form;
   }
 
   /**
@@ -168,11 +183,11 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
         '#markup' => $this->t('@number payments:', ['@number' => $numberPayments]),
       ];
 
-      /** @var \Drupal\commerce_installments\Plugin\Commerce\InstallmentPlan\InstallmentPlanInterface $plan */
-      $plan = $this->installmentPlanManager->createInstance($this->getConfiguration()['installment_plan'], $this->getConfiguration());
-      $dates = $plan->getInstallmentDates($numberPayments);
-      $amounts = $plan->getInstallmentAmounts($numberPayments, $this->order->getTotalPrice());
-      $rows = [];
+      /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface */
+      if ($plan = $this->installmentPlanMethodStorage->load($this->getConfiguration()['installment_plan'])) {
+        $dates = $plan->getPlugin()->getInstallmentDates($numberPayments);
+        $amounts = $plan->getPlugin()->getInstallmentAmounts($numberPayments, $this->order->getTotalPrice());
+        $rows = [];
         foreach ($dates as $delta => $date) {
           $row = [];
           $row[] = $date->format('m-d-Y');
@@ -180,14 +195,16 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
 
           $rows[] = $row;
         }
-      $summary['installment_table'] = [
-        '#type' => 'table',
-        '#rows' => $rows,
-        '#header' => [
-          $this->t('Date'),
-          $this->t('Amount'),
-        ],
-      ];
+        $summary['installment_table'] = [
+          '#type' => 'table',
+          '#rows' => $rows,
+          '#header' => [
+            $this->t('Date'),
+            $this->t('Amount'),
+          ],
+        ];
+      }
+
     }
 
     return $summary;

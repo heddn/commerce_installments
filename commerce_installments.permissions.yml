@@ -1,3 +1,6 @@
+administer commerce installment plan methods:
+  title: 'Administer installment plan methods'
+  'restrict access': TRUE
 
 add installment plan entities:
   title: 'Create new Installment Plan entities'

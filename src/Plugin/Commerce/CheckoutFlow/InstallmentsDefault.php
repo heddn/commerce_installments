@@ -8,8 +8,8 @@ use Drupal\commerce_checkout\Plugin\Commerce\CheckoutFlow\CheckoutFlowWithPanesB
  * Provides a default installments checkout flow.
  *
  * @CommerceCheckoutFlow(
- *   id = "installments_default",
- *   label = "Installments - Default",
+ *   id = "commerce_installments_default",
+ *   label = "Commerce Installments - Default",
  * )
  */
 class InstallmentsDefault extends CheckoutFlowWithPanesBase {

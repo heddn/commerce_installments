@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\commerce_installments\Plugin\Commerce\InstallmentPlan;
+namespace Drupal\commerce_installments\Plugin\Commerce\InstallmentPlanMethod;
 
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_price\Price;
@@ -9,9 +9,9 @@ use Drupal\Component\Plugin\PluginInspectionInterface;
 use Drupal\Core\Plugin\PluginFormInterface;
 
 /**
- * Defines an interface for Installment Plan plugins.
+ * Defines an interface for Installment Plan Method plugins.
  */
-interface InstallmentPlanInterface extends PluginInspectionInterface, ConfigurablePluginInterface, PluginFormInterface {
+interface InstallmentPlanMethodInterface extends PluginInspectionInterface, ConfigurablePluginInterface, PluginFormInterface {
 
   /**
    * Get the installment plan bundle.

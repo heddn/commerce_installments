@@ -4,7 +4,7 @@ namespace Drupal\commerce_installments\Plugin\Commerce\CheckoutPane;
 
 use Drupal\commerce\Response\NeedsRedirectException;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutFlow\CheckoutFlowInterface;
-use Drupal\commerce_installments\Plugin\InstallmentPlanManager;
+use Drupal\commerce_installments\Plugin\InstallmentPlanMethodManager;
 use Drupal\commerce_payment\Plugin\Commerce\CheckoutPane\PaymentProcess;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\ManualPaymentGatewayInterface;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGatewayInterface;
@@ -39,10 +39,10 @@ class InstallmentPaymentProcess extends PaymentProcess {
    *   The parent checkout flow.
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
    *   The entity type manager.
-   * @param \Drupal\commerce_installments\Plugin\InstallmentPlanManager $installment_plan_manager
+   * @param \Drupal\commerce_installments\Plugin\InstallmentPlanMethodManager $installment_plan_manager
    *   The installment plan manager.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, CheckoutFlowInterface $checkout_flow, EntityTypeManagerInterface $entity_type_manager, InstallmentPlanManager $installment_plan_manager) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, CheckoutFlowInterface $checkout_flow, EntityTypeManagerInterface $entity_type_manager, InstallmentPlanMethodManager $installment_plan_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $checkout_flow, $entity_type_manager);
     $this->installmentPlanManager = $installment_plan_manager;
   }
@@ -57,7 +57,7 @@ class InstallmentPaymentProcess extends PaymentProcess {
       $plugin_definition,
       $checkout_flow,
       $container->get('entity_type.manager'),
-      $container->get('plugin.manager.installment_plan')
+      $container->get('plugin.manager.commerce_installment_plan_methods')
     );
   }
 
@@ -90,7 +90,7 @@ class InstallmentPaymentProcess extends PaymentProcess {
       // Retrieve the installment selection pane. Use its configuration.
       $installment_pane = $this->checkoutFlow->getPane('installment_selection');
 
-      /** @var \Drupal\commerce_installments\Plugin\Commerce\InstallmentPlan\InstallmentPlanInterface $planPlugin */
+      /** @var \Drupal\commerce_installments\Plugin\Commerce\InstallmentPlanMethod\InstallmentPlanMethodInterface $planPlugin */
       $planPlugin = $this->installmentPlanManager->createInstance($installment_pane->getConfiguration()['installment_plan'], []);
 
 

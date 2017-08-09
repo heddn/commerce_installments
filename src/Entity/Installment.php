@@ -148,6 +148,14 @@ class Installment extends ContentEntityBase implements InstallmentInterface {
   /**
    * {@inheritdoc}
    */
+  public function setState($state_id) {
+    $this->set('state', $state_id);
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function setPaymentDate($timestamp) {
     $this->set('payment_date', $timestamp);
     return $this;
@@ -190,6 +198,16 @@ class Installment extends ContentEntityBase implements InstallmentInterface {
     $workflow = InstallmentType::load($installment->bundle())->getWorkflowId();
     return $workflow;
   }
+
+  /**
+   * @inheritDoc
+   */
+  public function getInstallmentPlan() {
+    $results = $this->entityTypeManager()->getStorage('installment_plan')->getQuery()
+      ->condition('installments', $this->id())->execute();
+    return $this->entityTypeManager()->getStorage('installment_plan')->load(reset($results));
+  }
+
 
   /**
    * {@inheritdoc}
