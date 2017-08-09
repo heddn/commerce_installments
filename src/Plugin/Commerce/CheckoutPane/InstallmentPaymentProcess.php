@@ -2,7 +2,6 @@
 
 namespace Drupal\commerce_installments\Plugin\Commerce\CheckoutPane;
 
-use Drupal\commerce\Response\NeedsRedirectException;
 use Drupal\commerce_checkout\Plugin\Commerce\CheckoutFlow\CheckoutFlowInterface;
 use Drupal\commerce_installments\Plugin\InstallmentPlanMethodManager;
 use Drupal\commerce_payment\Plugin\Commerce\CheckoutPane\PaymentProcess;
@@ -11,7 +10,6 @@ use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OffsitePaymentGateway
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OnsitePaymentGatewayInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -25,6 +23,16 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * )
  */
 class InstallmentPaymentProcess extends PaymentProcess {
+
+  /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface */
+  protected $installmentPlanMethodStorage;
+
+  /**
+   * Skip this pane if there are no eligible installments plan methods.
+   *
+   * @var bool $skip
+   */
+  protected $skip;
 
   /**
    * Constructs a new CheckoutPaneBase object.
@@ -45,6 +53,12 @@ class InstallmentPaymentProcess extends PaymentProcess {
   public function __construct(array $configuration, $plugin_id, $plugin_definition, CheckoutFlowInterface $checkout_flow, EntityTypeManagerInterface $entity_type_manager, InstallmentPlanMethodManager $installment_plan_manager) {
     parent::__construct($configuration, $plugin_id, $plugin_definition, $checkout_flow, $entity_type_manager);
     $this->installmentPlanManager = $installment_plan_manager;
+
+    $this->installmentPlanMethodStorage = $this->entityTypeManager->getStorage('installment_plan_method');
+    // If an installment plan isn't eligible, default to standard payment.
+    if (!$this->installmentPlanMethodStorage->loadEligible($this->order)) {
+      $this->skip = TRUE;
+    }
   }
 
   /**
@@ -69,13 +83,17 @@ class InstallmentPaymentProcess extends PaymentProcess {
     $installment_pane = $this->checkoutFlow->getPane('installment_selection');
     // This pane can't be used without the PaymentInformation pane.
     $payment_info_pane = $this->checkoutFlow->getPane('payment_information');
-    return $installment_pane->isVisible() && $installment_pane->getStepId() != '_disabled' && $payment_info_pane->isVisible() && $payment_info_pane->getStepId() != '_disabled';
+    return !$this->skip && $installment_pane->isVisible() && $installment_pane->getStepId() != '_disabled' && $payment_info_pane->isVisible() && $payment_info_pane->getStepId() != '_disabled';
   }
 
   /**
    * {@inheritdoc}
    */
   public function buildPaneForm(array $pane_form, FormStateInterface $form_state, array &$complete_form) {
+    if ($this->skip) {
+      return parent::buildPaneForm($pane_form, $form_state, $complete_form);
+    }
+
     // The payment gateway is currently always required to be set.
     if ($this->order->get('payment_gateway')->isEmpty()) {
       drupal_set_message($this->t('No payment gateway selected.'), 'error');
@@ -111,28 +129,6 @@ class InstallmentPaymentProcess extends PaymentProcess {
       drupal_set_message($this->t('Something went wrong in setting up your installment plan.'), 'error');
       $this->redirectToPreviousStep();
     }
-  }
-
-  /**
-   * Builds the URL to the payment information checkout step.
-   *
-   * @return string
-   *   The URL to the payment information checkout step.
-   */
-  protected function buildPaymentInformationStepUrl() {
-    return Url::fromRoute('commerce_checkout.form', [
-      'commerce_order' => $this->order->id(),
-      'step' => $this->checkoutFlow->getPane('payment_information')->getStepId(),
-    ], ['absolute' => TRUE])->toString();
-  }
-
-  /**
-   * Redirects to a previous checkout step on error.
-   *
-   * @throws \Drupal\commerce\Response\NeedsRedirectException
-   */
-  protected function redirectToPreviousStep() {
-    throw new NeedsRedirectException($this->buildPaymentInformationStepUrl());
   }
 
 }

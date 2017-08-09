@@ -10,7 +10,6 @@ use Drupal\commerce_price\NumberFormatterFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Link;
-use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -43,6 +42,13 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
   protected $numberFormatter;
 
   /**
+   * Skip this pane if there are no eligible installments plan methods.
+   *
+   * @var bool $skip
+   */
+  protected $skip;
+
+  /**
    * Constructs a new CheckoutPaneBase object.
    *
    * @param array $configuration
@@ -66,6 +72,11 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
     $this->installmentPlanMethodStorage = $this->entityTypeManager->getStorage('installment_plan_method');
     $this->currencyStorage = $this->entityTypeManager->getStorage('commerce_currency');
     $this->numberFormatter = $numberFormatter->createInstance();
+
+    // If an installment plan isn't eligible, default to standard payment.
+    if (!$this->installmentPlanMethodStorage->loadEligible($this->order)) {
+      $this->skip = TRUE;
+    }
   }
 
   /**
@@ -142,14 +153,6 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
 
       return $pane_form;
     }
-    else {
-      $link = Link::createFromRoute($this->t('create'), 'entity.installment_plan_method.add_form');
-      return [
-        '#type' => 'markup',
-        '#markup' => $this->t('You must first @create an installment plan method.', ['@create' => $link->toString()]),
-      ];
-    }
-
   }
 
   /**
@@ -177,7 +180,7 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
         '#markup' => $this->t('No installment plan selected.'),
       ];
     }
-    else {
+    elseif (!$this->skip) {
       $totalPrice = $this->order->getTotalPrice()->divide($numberPayments);
       $summary['installment_payments'] = [
         '#markup' => $this->t('@number payments:', ['@number' => $numberPayments]),

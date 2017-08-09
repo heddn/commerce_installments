@@ -22,7 +22,7 @@ use Drupal\Core\Config\Entity\ConfigEntityBase;
  *   ),
  *   handlers = {
  *     "list_builder" = "Drupal\commerce_installments\InstallmentPlanMethodListBuilder",
- *     "storage" = "Drupal\Core\Config\Entity\ConfigEntityStorage",
+ *     "storage" = "Drupal\commerce_installments\InstallmentPlanMethodStorage",
  *     "form" = {
  *       "add" = "Drupal\commerce_installments\Form\InstallmentPlanMethodForm",
  *       "edit" = "Drupal\commerce_installments\Form\InstallmentPlanMethodForm",
@@ -193,13 +193,13 @@ class InstallmentPlanMethod extends ConfigEntityBase implements InstallmentPlanM
       // installment plan methods without conditions always apply.
       return TRUE;
     }
-    $order_conditions = array_filter($conditions, function ($condition) {
+    $method_conditions = array_filter($conditions, function ($condition) {
       /** @var \Drupal\commerce\Plugin\Commerce\Condition\ConditionInterface $condition */
       return $condition->getEntityTypeId() == 'commerce_order';
     });
-    $order_conditions = new ConditionGroup($order_conditions, 'AND');
+    $method_conditions = new ConditionGroup($method_conditions, 'AND');
 
-    return $order_conditions->evaluate($order);
+    return $method_conditions->evaluate($order);
   }
 
   /**
