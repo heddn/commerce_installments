@@ -20,32 +20,32 @@ configuration:
       double_entry: true
       step: order_information
       weight: '1'
-    review:
-      step: review
-      weight: '3'
-    completion_message:
-      step: complete
-      weight: '4'
-    order_summary:
-      view: commerce_checkout_order_summary
-      step: _sidebar
-      weight: '5'
-    commerce_installments_payment_process:
-      capture: true
-      step: payment
-      weight: '10'
+    payment_information:
+      step: order_information
+      weight: '2'
     installment_selection:
       installment_plan: monthly
       step: installments
-      weight: '10'
-    payment_information:
-      step: order_information
-      weight: '10'
-    payment_process:
+      weight: '3'
+    review:
+      step: review
+      weight: '4'
+    commerce_installments_payment_process:
       capture: true
       step: payment
-      weight: '10'
+      weight: '5'
+    completion_message:
+      step: complete
+      weight: '6'
+    order_summary:
+      view: commerce_checkout_order_summary
+      step: _sidebar
+      weight: '7'
     coupon_redemption:
       allow_multiple: true
       step: _sidebar
-      weight: '10'
+      weight: '8'
+    payment_process:
+      capture: true
+      step: _disabled
+      weight: '9'

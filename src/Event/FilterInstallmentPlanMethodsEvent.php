@@ -32,9 +32,9 @@ class FilterInstallmentPlanMethodsEvent extends Event {
    * @param \Drupal\commerce_installments\Entity\InstallmentPlanMethod[] $methods
    *   The installment plan methods.
    * @param \Drupal\commerce_order\Entity\OrderInterface $order
-   *   The order.
+   *   (optional) The order.
    */
-  public function __construct(array $methods, OrderInterface $order) {
+  public function __construct(array $methods, OrderInterface $order = NULL) {
     $this->methods = $methods;
     $this->order = $order;
   }
@@ -66,7 +66,7 @@ class FilterInstallmentPlanMethodsEvent extends Event {
    * Gets the order.
    *
    * @return \Drupal\commerce_order\Entity\OrderInterface
-   *   The order.
+   *   The order or NULL.
    */
   public function getOrder() {
     return $this->order;

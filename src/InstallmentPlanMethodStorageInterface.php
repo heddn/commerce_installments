@@ -19,11 +19,11 @@ interface InstallmentPlanMethodStorageInterface extends ConfigEntityStorageInter
    * Loads all eligible installment plan methods for the given order.
    *
    * @param \Drupal\commerce_order\Entity\OrderInterface $order
-   *   The order.
+   *   (optional) The order.
    *
    * @return \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface[]
    *   The installment plan methods.
    */
-  public function loadEligible(OrderInterface $order);
+  public function loadEligible(OrderInterface $order = NULL);
 
 }

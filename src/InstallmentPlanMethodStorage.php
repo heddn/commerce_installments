@@ -65,7 +65,7 @@ class InstallmentPlanMethodStorage extends ConfigEntityStorage implements Instal
   /**
    * {@inheritdoc}
    */
-  public function loadEligible(OrderInterface $order) {
+  public function loadEligible(OrderInterface $order = NULL) {
     /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface[] $methods */
     $methods = $this->loadByProperties(['status' => TRUE]);
     // Allow the list of payment gateways to be filtered via code.
@@ -75,9 +75,11 @@ class InstallmentPlanMethodStorage extends ConfigEntityStorage implements Instal
 
 
     // Evaluate conditions for the remaining ones.
-    foreach ($methods as $method_id => $method) {
-      if (!$method->applies($order)) {
-        unset($methods[$method_id]);
+    if ($order) {
+      foreach ($methods as $method_id => $method) {
+        if (!$method->applies($order)) {
+          unset($methods[$method_id]);
+        }
       }
     }
     uasort($methods, [$this->entityType->getClass(), 'sort']);
