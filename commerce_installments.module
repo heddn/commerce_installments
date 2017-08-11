@@ -7,6 +7,7 @@
 
 use Drupal\commerce\BundleFieldDefinition;
 use Drupal\commerce_installments\Entity\InstallmentPlanTypeInterface;
+use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_payment\Exception\DeclineException;
 use Drupal\commerce_payment\Exception\PaymentGatewayException;
 use Drupal\commerce_payment\Plugin\Commerce\PaymentGateway\OnsitePaymentGatewayInterface;
@@ -126,6 +127,19 @@ function commerce_installments_add_installments_field(InstallmentPlanTypeInterfa
 }
 
 /**
+ * Implements hook_ENTITY_TYPE_delete() for 'commerce_order'.
+ *
+ * Delete the installment plans of a delete order.
+ */
+function commerce_installments_commerce_order_delete(OrderInterface $order) {
+  /** @var \Drupal\commerce_installments\Entity\InstallmentPlanInterface[] $plans */
+  $plans = \Drupal::entityTypeManager()->getStorage('installment_plan')->loadByProperties(['order_id' => $order->id()]);
+  foreach ($plans as $plan) {
+    $plan->delete();
+  }
+}
+
+/**
  * Implements hook_cron().
  */
 function commerce_installments_cron() {
@@ -163,6 +177,8 @@ function commerce_installments_cron() {
       try {
         $payment->payment_method = $plan->getPaymentMethod();
         $payment_gateway_plugin->createPayment($payment);
+        $installment->setState('paid');
+        $installment->save();
       }
       catch (DeclineException $e) {
         \Drupal::logger('commerce_installments')->error($e->getMessage());
@@ -171,8 +187,10 @@ function commerce_installments_cron() {
       catch (PaymentGatewayException $e) {
         \Drupal::logger('commerce_installments')->error($e->getMessage());
         \Drupal::logger('commerce_installments')->error('PaymentGatewayException for plan: %pid and installment %iid', ['%pid' => $plan->id(), '%iid' => $installment->id()]);
-        $installment->setState('paid');
-        $installment->save();
+      }
+      catch (Exception $e) {
+        \Drupal::logger('commerce_installments')->error($e->getMessage());
+        \Drupal::logger('commerce_installments')->error('Unexpected exception for plan: %pid and installment %iid', ['%pid' => $plan->id(), '%iid' => $installment->id()]);
       }
     }
     else {

@@ -275,6 +275,24 @@ class InstallmentPlan extends RevisionableContentEntityBase implements Installme
   /**
    * {@inheritdoc}
    */
+  public static function postDelete(EntityStorageInterface $storage, array $entities) {
+    // Delete the installments of a deleted plan.
+    $installments = [];
+    foreach ($entities as $entity) {
+      if (empty($entity->installments)) {
+        continue;
+      }
+      foreach ($entity->installments as $item) {
+        $installments[$item->target_id] = $item->entity;
+      }
+    }
+    $variation_storage = \Drupal::service('entity_type.manager')->getStorage('installment');
+    $variation_storage->delete($installments);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function baseFieldDefinitions(EntityTypeInterface $entity_type) {
     $fields = parent::baseFieldDefinitions($entity_type);
 

@@ -65,6 +65,14 @@ class InstallmentPlanListBuilder extends EntityListBuilder {
   /**
    * {@inheritdoc}
    */
+  public function load() {
+    $order = $this->routeMatch->getParameter('commerce_order');
+    return $this->storage->loadByProperties(['order_id' => $order->id()]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function buildRow(EntityInterface $entity) {
     /* @var $entity \Drupal\commerce_installments\Entity\InstallmentPlan */
     $row['id'] = $entity->id();

@@ -4,6 +4,7 @@ namespace Drupal\commerce_installments\Plugin\Commerce\InstallmentPlanMethod;
 
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\commerce_price\Price;
+use Drupal\commerce_price\RounderInterface;
 use Drupal\Component\Plugin\PluginBase;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -52,6 +53,11 @@ abstract class InstallmentPlanMethodMethodBase extends PluginBase implements Ins
   protected $installmentPlanStorage;
 
   /**
+   * @var \Drupal\commerce_price\RounderInterface $rounder
+   */
+  protected $rounder;
+
+  /**
    *    * Constructs a Drupal\Component\Plugin\PluginBase object.
    *
    * @param array $configuration
@@ -64,14 +70,17 @@ abstract class InstallmentPlanMethodMethodBase extends PluginBase implements Ins
    *   The config factory.
    * @param \Drupal\Core\Entity\EntityTypeBundleInfoInterface $entityTypeBundleInfo
    *   The entity type bundle info.
+   * @param \Drupal\commerce_price\RounderInterface $rounder
+   *   The rounder service.
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entityTypeManager, ConfigFactoryInterface $configFactory, EntityTypeBundleInfoInterface $entityTypeBundleInfo) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityTypeManagerInterface $entityTypeManager, ConfigFactoryInterface $configFactory, EntityTypeBundleInfoInterface $entityTypeBundleInfo, RounderInterface $rounder) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->entityTypeManager = $entityTypeManager;
     $this->installmentStorage = $this->entityTypeManager->getStorage('installment');
     $this->installmentPlanStorage = $this->entityTypeManager->getStorage('installment_plan');
     $this->configFactory = $configFactory;
     $this->entityTypeBundleInfo = $entityTypeBundleInfo;
+    $this->rounder = $rounder;
 
     $this->setConfiguration($configuration);
   }
@@ -87,7 +96,8 @@ abstract class InstallmentPlanMethodMethodBase extends PluginBase implements Ins
       $plugin_definition,
       $container->get('entity_type.manager'),
       $container->get('config.factory'),
-      $container->get('entity_type.bundle.info')
+      $container->get('entity_type.bundle.info'),
+      $container->get('commerce_price.rounder')
     );
   }
 
@@ -243,11 +253,11 @@ abstract class InstallmentPlanMethodMethodBase extends PluginBase implements Ins
   public function getInstallmentAmounts($numberPayments, Price $totalPrice) {
     $installmentAmount = $totalPrice->divide($numberPayments);
     $payments = array_fill(0, $numberPayments, $installmentAmount);
-    $multipliedAmount = $installmentAmount->multiply($numberPayments);
+    $multipliedAmount = $this->rounder->round($installmentAmount->multiply($numberPayments));
     $difference = $totalPrice->subtract($multipliedAmount);
     if ($difference->getNumber()){
       array_pop($payments);
-      array_push($payments, $installmentAmount->add($difference));
+      array_push($payments, $this->$installmentAmount->add($difference));
     }
 
     return $payments;

@@ -83,7 +83,7 @@ class InstallmentPaymentProcess extends PaymentProcess {
     $installment_pane = $this->checkoutFlow->getPane('installment_selection');
     // This pane can't be used without the PaymentInformation pane.
     $payment_info_pane = $this->checkoutFlow->getPane('payment_information');
-    return !$this->skip && $installment_pane->isVisible() && $installment_pane->getStepId() != '_disabled' && $payment_info_pane->isVisible() && $payment_info_pane->getStepId() != '_disabled';
+    return $installment_pane->isVisible() && $installment_pane->getStepId() != '_disabled' && $payment_info_pane->isVisible() && $payment_info_pane->getStepId() != '_disabled';
   }
 
   /**

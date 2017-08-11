@@ -85,9 +85,13 @@ class Installment extends ContentEntityBase implements InstallmentInterface {
    * {@inheritdoc}
    */
   public function label() {
+    /** @var \Drupal\commerce_price\RounderInterface $rounder */
+    $rounder = \Drupal::service('commerce_price.rounder');
+    $currencyStorage = $this->entityTypeManager()->getStorage('commerce_currency');
+    $price = $rounder->round($this->getAmount());
     $args = [
-      ':amount' => $this->getAmount()->__toString(),
-      ':date' => \Drupal::getContainer()->get('date.formatter')->format($this->getPaymentDate(), 'html_date'),
+      ':amount' => \Drupal::service('commerce_price.number_formatter_factory')->createInstance()->formatCurrency($price->getNumber(), $currencyStorage->load($price->getCurrencyCode())),
+      ':date' => \Drupal::service('date.formatter')->format($this->getPaymentDate(), 'html_date'),
       ':state' => $this->getState()->getLabel(),
     ];
     return $this->t(':amount on :date is :state', $args);
