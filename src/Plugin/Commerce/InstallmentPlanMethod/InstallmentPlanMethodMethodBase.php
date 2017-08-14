@@ -251,13 +251,13 @@ abstract class InstallmentPlanMethodMethodBase extends PluginBase implements Ins
    * @inheritDoc
    */
   public function getInstallmentAmounts($numberPayments, Price $totalPrice) {
-    $installmentAmount = $totalPrice->divide($numberPayments);
+    $installmentAmount = $this->rounder->round($totalPrice->divide($numberPayments));
     $payments = array_fill(0, $numberPayments, $installmentAmount);
-    $multipliedAmount = $this->rounder->round($installmentAmount->multiply($numberPayments));
+    $multipliedAmount = $installmentAmount->multiply($numberPayments);
     $difference = $totalPrice->subtract($multipliedAmount);
     if ($difference->getNumber()){
       array_pop($payments);
-      array_push($payments, $this->$installmentAmount->add($difference));
+      array_push($payments, $installmentAmount->add($difference));
     }
 
     return $payments;
