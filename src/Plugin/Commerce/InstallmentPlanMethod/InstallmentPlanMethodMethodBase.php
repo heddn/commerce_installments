@@ -231,7 +231,7 @@ abstract class InstallmentPlanMethodMethodBase extends PluginBase implements Ins
     ]);
 
     $installmentPayments = $this->getInstallmentAmounts($numberPayments, $order->getTotalPrice());
-    $installmentDates = $this->getInstallmentDates($numberPayments);
+    $installmentDates = $this->getInstallmentDates($numberPayments, $order);
 
     foreach ($installmentPayments as $delta => $payment) {
       $installmentEntity = $this->installmentStorage->create([

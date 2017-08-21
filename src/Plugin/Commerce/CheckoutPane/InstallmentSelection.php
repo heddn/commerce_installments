@@ -188,7 +188,7 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
 
       /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface */
       if ($plan = $this->installmentPlanMethodStorage->load($this->getConfiguration()['installment_plan'])) {
-        $dates = $plan->getPlugin()->getInstallmentDates($numberPayments);
+        $dates = $plan->getPlugin()->getInstallmentDates($numberPayments, $this->order);
         $amounts = $plan->getPlugin()->getInstallmentAmounts($numberPayments, $this->order->getTotalPrice());
         $rows = [];
         foreach ($dates as $delta => $date) {

@@ -4,6 +4,7 @@
 namespace Drupal\commerce_installments\Plugin\Commerce\InstallmentPlanMethod;
 
 use Drupal\commerce_installments\Annotation\InstallmentPlan;
+use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\Component\Datetime\DateTimePlus;
 
 /**
@@ -26,7 +27,7 @@ class Monthly extends InstallmentPlanMethodMethodBase {
   /**
    * @inheritDoc
    */
-  public function getInstallmentDates($numberPayments) {
+  public function getInstallmentDates($numberPayments, OrderInterface $order) {
     $monthYear = (new DateTimePlus('now', $this->getTimezone()))->format('m-Y');
     $monthDay = $this->getDay();
     $time = $this->getTime();

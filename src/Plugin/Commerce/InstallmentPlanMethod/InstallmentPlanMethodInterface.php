@@ -103,10 +103,12 @@ interface InstallmentPlanMethodInterface extends PluginInspectionInterface, Conf
    *
    * @param int $numberPayments
    *   The number of installments to spread out the payments.
+   * @param \Drupal\commerce_order\Entity\OrderInterface $order
+   *   The order.
    *
    * @return \Drupal\Component\Datetime\DateTimePlus[]
    *   An array of installment dates.
    */
-  public function getInstallmentDates($numberPayments);
+  public function getInstallmentDates($numberPayments, OrderInterface $order);
 
 }
