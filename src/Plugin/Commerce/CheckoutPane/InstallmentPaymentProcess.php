@@ -90,7 +90,7 @@ class InstallmentPaymentProcess extends PaymentProcess {
    * {@inheritdoc}
    */
   public function buildPaneForm(array $pane_form, FormStateInterface $form_state, array &$complete_form) {
-    if ($this->skip) {
+    if ($this->skip || empty($this->order->getData('commerce_installments_number_payments'))) {
       return parent::buildPaneForm($pane_form, $form_state, $complete_form);
     }
 

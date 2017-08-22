@@ -29,7 +29,7 @@ class InstallmentSelection extends CheckoutPaneBase implements CheckoutPaneInter
   /** @var \Drupal\commerce_installments\Entity\InstallmentPlanInterface */
   protected $installmentPlanStorage;
 
-  /** @var \Drupal\commerce_installments\Entity\InstallmentPlanMethodInterface */
+  /** @var \Drupal\commerce_installments\InstallmentPlanMethodStorageInterface */
   protected $installmentPlanMethodStorage;
 
   /** @var \Drupal\Core\Entity\EntityStorageInterface $currencyStorage */

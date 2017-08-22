@@ -33,17 +33,25 @@ class Monthly extends InstallmentPlanMethodMethodBase {
     $time = $this->getTime();
     $date = DateTimePlus::createFromFormat('d-m-Y H:i:s', "$monthDay-$monthYear $time");
 
-    $oldDate = clone $date;
-
     $dates = [];
     // Add today to the list of payments.
     $dates[] = clone $date;
     // Now add the rest of the installments.
     for ($i = 1; $i < $numberPayments; $i++) {
-      $date->modify('+ 1 month');
+      $oldDate = clone $date;
+      $date->modify("+ 1 month");
       $dateInterval = $date->diff($oldDate);
-      if ($dateInterval->d <> 0) {
-        $date->modify('last day of last month');
+      // Assert that the month interval is properly 1 month:
+      while ($dateInterval->m < 1) {
+        // We went 30x days but didn't reach the right month:
+        // Ex. Dec 1 to Dec 31. appropriate behavior is to go to Jan 1.
+        $date->modify("first day of next month");
+        $dateInterval = $date->diff($oldDate);
+      }
+      if ($dateInterval->d != 0) {
+        // We went too far, which can happen around February. Collapse back
+        // to the end of the proper (prior) month.
+        $date->modify("last day of last month");
       }
       $dates[] = clone $date;
     }
