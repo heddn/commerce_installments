@@ -6,6 +6,7 @@ namespace Drupal\commerce_installments\Plugin\Commerce\InstallmentPlanMethod;
 use Drupal\commerce_installments\Annotation\InstallmentPlan;
 use Drupal\commerce_order\Entity\OrderInterface;
 use Drupal\Component\Datetime\DateTimePlus;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Provides a monthly installment plan method plugin.
@@ -18,10 +19,34 @@ use Drupal\Component\Datetime\DateTimePlus;
 class Monthly extends InstallmentPlanMethodMethodBase {
 
   /**
+   * {@inheritdoc}
+   */
+  public function defaultConfiguration() {
+    return ['day' => 15] + parent::defaultConfiguration();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
+    $form = parent::buildConfigurationForm($form, $form_state);
+
+    $form['day'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Day of month'),
+      '#options' => array_combine(range(1, 31), range(1, 31)),
+      '#default_value' => $this->getDay(),
+      '#required' => TRUE,
+    ];
+
+    return $form;
+  }
+
+  /**
    * @inheritDoc
    */
   public function getDay() {
-    return (new DateTimePlus('now', $this->getTimezone()))->format('d');
+    return $this->getConfiguration()['day'];
   }
 
   /**
@@ -31,32 +56,41 @@ class Monthly extends InstallmentPlanMethodMethodBase {
     $monthYear = (new DateTimePlus('now', $this->getTimezone()))->format('m-Y');
     $monthDay = $this->getDay();
     $time = $this->getTime();
-    $date = DateTimePlus::createFromFormat('d-m-Y H:i:s', "$monthDay-$monthYear $time");
+    $timezone = $this->getTimezone();
+    /** @var \Drupal\Component\Datetime\DateTimePlus $date */
+    $date = DateTimePlus::createFromFormat('d-m-Y H:i:s', "$monthDay-$monthYear $time", $timezone);
+    $this->adjustDay($date);
 
+    $originalDate = clone $date;
     $dates = [];
     // Add today to the list of payments.
     $dates[] = clone $date;
     // Now add the rest of the installments.
     for ($i = 1; $i < $numberPayments; $i++) {
-      $oldDate = clone $date;
-      $date->modify("+ 1 month");
-      $dateInterval = $date->diff($oldDate);
+      $date = clone $originalDate;
+      $date->modify("+ $i month");
+      $dateInterval = $date->diff($originalDate);
       // Assert that the month interval is properly 1 month:
-      while ($dateInterval->m < 1) {
-        // We went 30x days but didn't reach the right month:
-        // Ex. Dec 1 to Dec 31. appropriate behavior is to go to Jan 1.
-        $date->modify("first day of next month");
-        $dateInterval = $date->diff($oldDate);
-      }
       if ($dateInterval->d != 0) {
         // We went too far, which can happen around February. Collapse back
         // to the end of the proper (prior) month.
         $date->modify("last day of last month");
       }
-      $dates[] = clone $date;
+      $dates[] = $date;
     }
 
     return $dates;
+  }
+
+  /**
+   * Adjust date to not occur in the past.
+   *
+   * @param $date \Drupal\Component\Datetime\DateTimePlus
+   */
+  protected function adjustDay(DateTimePlus $date) {
+    if (new DateTimePlus('now', $this->getTimezone()) > $date ) {
+      $date->modify('+ 1 month');
+    }
   }
 
 }

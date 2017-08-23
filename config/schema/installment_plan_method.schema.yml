@@ -43,6 +43,9 @@ commerce_installments.installment_plan_methods_configuration:
     time_of_day:
       type: string
       label: 'Time of day to execute payment'
+    day:
+      type: string
+      label: 'Day of month'
     timezone:
       type: string
       label: 'Timezone to execute payment'
